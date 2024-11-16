@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id                String    @id @default(cuid())
+  name              String
+  cpf               String    @unique
+  phone             String
+  birthDate         DateTime
+  address           String
+  zipCode           String
+  email             String    @unique
+  platform          String
+  plan              String
+  traderStatus      String    // "Aguardando Inicio" | "Em Curso" | "Aprovado" | "Reprovado"
+  startDate         DateTime?
+  endDate           DateTime?
+  observation       String?
+  cancellationDate  DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@map("clients")
+}
