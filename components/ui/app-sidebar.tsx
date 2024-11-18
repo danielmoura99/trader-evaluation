@@ -30,15 +30,15 @@ const data = {
       items: [
         {
           title: "Dashboard",
-          url: "#",
+          url: "/dashboard",
         },
         {
           title: "Avaliações",
-          url: "#",
+          url: "/evaluations",
         },
         {
           title: "Clientes",
-          url: "#",
+          url: "/clients",
         },
       ],
     },

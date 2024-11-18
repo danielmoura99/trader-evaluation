@@ -10,12 +10,12 @@ datasource db {
 model Client {
   id                String    @id @default(cuid())
   name              String
-  cpf               String    @unique
+  cpf               String    
   phone             String
   birthDate         DateTime
-  address           String
-  zipCode           String
-  email             String    @unique
+  address           String?
+  zipCode           String?
+  email             String    
   platform          String
   plan              String
   traderStatus      String    // "Aguardando Inicio" | "Em Curso" | "Aprovado" | "Reprovado"

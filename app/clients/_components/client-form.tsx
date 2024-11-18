@@ -203,7 +203,7 @@ export function ClientForm({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="TC - 50K">TC - 50K</SelectItem>
-                      <SelectItem value="TC - 100K">TC - 50K</SelectItem>
+                      <SelectItem value="TC - 100K">TC - 100K</SelectItem>
                       <SelectItem value="TC - 250K">TC - 250K</SelectItem>
                       <SelectItem value="TC - 500K">TC - 500K</SelectItem>
                       <SelectItem value="Trader Estrategista">

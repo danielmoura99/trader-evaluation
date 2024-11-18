@@ -24,6 +24,11 @@
     --input: 240 5.9% 90%;
     --ring: 240 5.9% 10%;
     --radius: 0.5rem;
+    --chart-1: 216 100% 50%;
+    --chart-2: 168 100% 50%;
+    --chart-3: 48 100% 50%;
+    --chart-label: 240 10% 3.9%;
+    --chart-background: 0 0% 100%;
   }
 
   .dark {
@@ -54,6 +59,11 @@
     --border: 0 0% 15%;
     --input: 0 0% 15%;
     --ring: 0 0% 83.9%;
+    --chart-1: 216 100% 60%;
+    --chart-2: 168 100% 60%;
+    --chart-3: 48 100% 60%;
+    --chart-label: 0 0% 98%;
+    --chart-background: 240 10% 3.9%;
   }
 }
 
