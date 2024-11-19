@@ -28,3 +28,15 @@ model Client {
 
   @@map("clients")
 }
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  role          String    @default("USER") // Adicionado para resolver erro de tipagem
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("users")
+}

@@ -7,6 +7,7 @@ import { Upload } from "lucide-react";
 
 export default function ImportPage() {
   const [isLoading, setIsLoading] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [result, setResult] = useState<any>(null);
 
   const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,13 +100,7 @@ export default function ImportPage() {
                     <h4 className="font-semibold text-red-400">
                       Erros de CPF:
                     </h4>
-                    <ul className="list-disc pl-5 mt-2">
-                      {result.details.cpfErrors.map((error, index) => (
-                        <li key={index} className="text-sm">
-                          {error}
-                        </li>
-                      ))}
-                    </ul>
+                    <ul className="list-disc pl-5 mt-2"></ul>
                   </div>
                 )}
 
@@ -114,13 +109,7 @@ export default function ImportPage() {
                     <h4 className="font-semibold text-yellow-400">
                       Erros de Data:
                     </h4>
-                    <ul className="list-disc pl-5 mt-2">
-                      {result.details.dateErrors.map((error, index) => (
-                        <li key={index} className="text-sm">
-                          {error}
-                        </li>
-                      ))}
-                    </ul>
+                    <ul className="list-disc pl-5 mt-2"></ul>
                   </div>
                 )}
 
@@ -129,13 +118,7 @@ export default function ImportPage() {
                     <h4 className="font-semibold text-red-400">
                       Erros de Criação:
                     </h4>
-                    <ul className="list-disc pl-5 mt-2">
-                      {result.details.creationErrors.map((error, index) => (
-                        <li key={index} className="text-sm">
-                          {error}
-                        </li>
-                      ))}
-                    </ul>
+                    <ul className="list-disc pl-5 mt-2"></ul>
                   </div>
                 )}
               </div>

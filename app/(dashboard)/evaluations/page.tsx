@@ -11,7 +11,7 @@ import {
   startEvaluation,
   finishEvaluation,
 } from "./_actions";
-import { Client, TraderStatusType } from "../types";
+import { Client, TraderStatusType } from "../../types";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,

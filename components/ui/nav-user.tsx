@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronsUpDown, LogOut } from "lucide-react";
-
+import { signOut } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -28,6 +28,13 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
+
+  const handleLogout = async () => {
+    await signOut({
+      redirect: true,
+      callbackUrl: "/auth/login", // Redireciona para a página de login após o logout
+    });
+  };
 
   return (
     <SidebarMenu>
@@ -68,9 +75,9 @@ export function NavUser({
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOut />
-              Log out
+            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+              <LogOut className="mr-2 h-4 w-4" />
+              Sair
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

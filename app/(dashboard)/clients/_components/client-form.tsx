@@ -339,7 +339,7 @@ export function ClientForm({
               <FormItem>
                 <FormLabel>Observação</FormLabel>
                 <FormControl>
-                  <Textarea {...field} />
+                  <Textarea {...field} value={field.value || ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -14,9 +14,9 @@ import {
 } from "@/components/ui/dialog";
 import { ClientForm } from "./_components/client-form";
 import { useState, useEffect, useCallback } from "react";
-import { Client, TraderStatusType } from "../types";
 import { createClient, updateClient, deleteClient } from "./_actions";
 import { useToast } from "@/hooks/use-toast";
+import { Client, TraderStatusType } from "@/app/types";
 
 function ClientsContent() {
   const [clients, setClients] = useState<Client[]>([]);
@@ -29,14 +29,28 @@ function ClientsContent() {
       const data = await getClients();
       const formattedClients = data.map((client) => ({
         ...client,
+        // Campos obrigatórios permanecem como estão
+        name: client.name,
+        email: client.email,
+        cpf: client.cpf,
+        phone: client.phone,
+        platform: client.platform,
+        plan: client.plan,
+        // Garantir que address e zipCode nunca sejam null
+        address: client.address || "",
+        zipCode: client.zipCode || "",
+        // Converter datas
         birthDate: new Date(client.birthDate),
         startDate: client.startDate ? new Date(client.startDate) : null,
         endDate: client.endDate ? new Date(client.endDate) : null,
         cancellationDate: client.cancellationDate
           ? new Date(client.cancellationDate)
           : null,
-        createdAt: new Date(client.createdAt),
-        updatedAt: new Date(client.updatedAt),
+        createdAt: client.createdAt ? new Date(client.createdAt) : new Date(),
+        updatedAt: client.updatedAt ? new Date(client.updatedAt) : new Date(),
+        // Garantir que observation seja string
+        observation: client.observation || "",
+        // Garantir que traderStatus seja do tipo correto
         traderStatus: client.traderStatus as TraderStatusType,
       }));
       setClients(formattedClients);

@@ -29,7 +29,7 @@ export const clientSchema = z.object({
   ]),
   startDate: z.date().optional().nullable(),
   endDate: z.date().optional().nullable(),
-  observation: z.string().optional().nullable(),
+  observation: z.string().optional().default(""),
   cancellationDate: z.date().optional().nullable(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),

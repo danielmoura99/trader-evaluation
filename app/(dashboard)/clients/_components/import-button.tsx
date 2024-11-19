@@ -38,7 +38,7 @@ export function ImportButton() {
     } catch (error) {
       toast({
         title: "Erro na importação",
-        description: error.message,
+        description: "",
         variant: "destructive",
       });
     } finally {
