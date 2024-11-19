@@ -8,6 +8,9 @@ import {
   getRecentClients,
 } from "./_actions";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function DashboardPage() {
   const [stats, planData, monthlyData, recentClients] = await Promise.all([
     getDashboardStats(),

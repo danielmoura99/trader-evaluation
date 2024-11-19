@@ -47,6 +47,7 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
+  debug: true, // Adicione isso temporariamente para ver logs detalhados
   callbacks: {
     async session({ token, session }) {
       if (token) {
