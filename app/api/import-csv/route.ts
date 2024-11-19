@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import { importClients } from "@/utils/import-data";
 
-// Aumenta o limite de tempo da requisição para 5 minutos
-export const maxDuration = 300; // segundos
+// Nova sintaxe de configuração
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+export const maxDuration = 60; // 60 segundos para plano hobby
+
+// Reduzindo o tamanho do lote para processar mais rápido
+const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8MB
 
 export async function POST(req: Request) {
   try {
@@ -13,6 +20,17 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "Nenhum arquivo fornecido" },
         { status: 400 }
+      );
+    }
+
+    // Verifica tamanho do arquivo
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        {
+          error: "Arquivo muito grande. Limite de 8MB.",
+          suggestion: "Divida o arquivo em partes menores.",
+        },
+        { status: 413 }
       );
     }
 
