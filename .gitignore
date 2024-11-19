@@ -37,3 +37,4 @@ next-env.d.ts
 
 # .vercelignore
 app/api/import-csv
+app/api/import
