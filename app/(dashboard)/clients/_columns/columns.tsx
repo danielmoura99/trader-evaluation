@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export const columns: ColumnDef<Client>[] = [
   {
@@ -45,7 +46,14 @@ export const columns: ColumnDef<Client>[] = [
     header: "Data Início",
     cell: ({ row }) => {
       const date = row.getValue("startDate");
-      return date ? format(new Date(date as string), "dd/MM/yyyy") : "-";
+      if (!date) return "-";
+
+      // Ajusta o fuso horário
+      const dateObj = new Date(date as string);
+      const offset = dateObj.getTimezoneOffset();
+      const adjustedDate = new Date(dateObj.getTime() + offset * 60 * 1000);
+
+      return format(adjustedDate, "dd/MM/yyyy", { locale: ptBR });
     },
   },
   {
@@ -53,7 +61,13 @@ export const columns: ColumnDef<Client>[] = [
     header: "Data Fim",
     cell: ({ row }) => {
       const date = row.getValue("endDate");
-      return date ? format(new Date(date as string), "dd/MM/yyyy") : "-";
+      if (!date) return "-";
+
+      const dateObj = new Date(date as string);
+      const offset = dateObj.getTimezoneOffset();
+      const adjustedDate = new Date(dateObj.getTime() + offset * 60 * 1000);
+
+      return format(adjustedDate, "dd/MM/yyyy", { locale: ptBR });
     },
   },
   {
@@ -61,7 +75,13 @@ export const columns: ColumnDef<Client>[] = [
     header: "Data Nascimento",
     cell: ({ row }) => {
       const date = row.getValue("birthDate");
-      return date ? format(new Date(date as string), "dd/MM/yyyy") : "-";
+      if (!date) return "-";
+
+      const dateObj = new Date(date as string);
+      const offset = dateObj.getTimezoneOffset();
+      const adjustedDate = new Date(dateObj.getTime() + offset * 60 * 1000);
+
+      return format(adjustedDate, "dd/MM/yyyy", { locale: ptBR });
     },
   },
   {
@@ -81,7 +101,13 @@ export const columns: ColumnDef<Client>[] = [
     header: "Data Cancelamento",
     cell: ({ row }) => {
       const date = row.getValue("cancellationDate");
-      return date ? format(new Date(date as string), "dd/MM/yyyy") : "-";
+      if (!date) return "-";
+
+      const dateObj = new Date(date as string);
+      const offset = dateObj.getTimezoneOffset();
+      const adjustedDate = new Date(dateObj.getTime() + offset * 60 * 1000);
+
+      return format(adjustedDate, "dd/MM/yyyy", { locale: ptBR });
     },
   },
   {

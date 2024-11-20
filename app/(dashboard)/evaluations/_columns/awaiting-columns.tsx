@@ -28,6 +28,10 @@ export const columns: ColumnDef<Client>[] = [
     },
   },
   {
+    accessorKey: "observation",
+    header: "Observação",
+  },
+  {
     id: "actions",
     cell: ({ row }) => {
       const client = row.original;

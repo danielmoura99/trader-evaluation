@@ -27,22 +27,31 @@ export const columns: ColumnDef<Client>[] = [
   },
   {
     accessorKey: "startDate",
-    header: "Início da Avaliação",
+    header: "Data Início",
     cell: ({ row }) => {
       const date = row.getValue("startDate");
-      return date
-        ? format(new Date(date as string), "dd/MM/yyyy", { locale: ptBR })
-        : "-";
+      if (!date) return "-";
+
+      // Ajusta o fuso horário
+      const dateObj = new Date(date as string);
+      const offset = dateObj.getTimezoneOffset();
+      const adjustedDate = new Date(dateObj.getTime() + offset * 60 * 1000);
+
+      return format(adjustedDate, "dd/MM/yyyy", { locale: ptBR });
     },
   },
   {
     accessorKey: "endDate",
-    header: "Fim da Avaliação",
+    header: "Data Fim",
     cell: ({ row }) => {
       const date = row.getValue("endDate");
-      return date
-        ? format(new Date(date as string), "dd/MM/yyyy", { locale: ptBR })
-        : "-";
+      if (!date) return "-";
+
+      const dateObj = new Date(date as string);
+      const offset = dateObj.getTimezoneOffset();
+      const adjustedDate = new Date(dateObj.getTime() + offset * 60 * 1000);
+
+      return format(adjustedDate, "dd/MM/yyyy", { locale: ptBR });
     },
   },
   {
