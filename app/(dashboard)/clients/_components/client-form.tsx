@@ -19,6 +19,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { getClientByCPF } from "../_actions";
+import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ClientFormProps {
   initialData?: Client;
@@ -31,11 +34,82 @@ export function ClientForm({
   onSubmit,
   onCancel,
 }: ClientFormProps) {
+  const { toast } = useToast();
+  const [isSearching, setIsSearching] = useState(false);
   const form = useForm<Client>({
     resolver: zodResolver(clientSchema),
     defaultValues: initialData || {
       traderStatus: TraderStatus.WAITING,
     },
+  });
+
+  const searchClientByCPF = async (cpf: string) => {
+    if (cpf.length < 11) return;
+
+    setIsSearching(true);
+    try {
+      const client = await getClientByCPF(cpf);
+      if (client) {
+        // Removemos o id e as datas de criação/atualização
+        const {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          id,
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          createdAt,
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          updatedAt,
+          ...clientData
+        } = client;
+
+        // Formata os dados antes de atualizar o formulário
+        const formattedClient = {
+          ...clientData,
+          // Campos obrigatórios
+          name: clientData.name,
+          cpf: clientData.cpf,
+          phone: clientData.phone,
+          email: clientData.email,
+          platform: clientData.platform,
+          plan: clientData.plan,
+          // Garante que campos opcionais de texto nunca sejam null
+          address: clientData.address || "",
+          zipCode: clientData.zipCode || "",
+          observation: clientData.observation || "",
+          // Converte datas
+          birthDate: new Date(clientData.birthDate),
+          startDate: undefined, // Nova avaliação, nova data
+          endDate: undefined, // Nova avaliação, nova data
+          cancellationDate: undefined, // Nova avaliação, sem data de cancelamento
+          // Garante o status correto para nova avaliação
+          traderStatus: TraderStatus.WAITING,
+        };
+
+        form.reset(formattedClient);
+
+        toast({
+          title: "Cliente encontrado",
+          description: "Os dados foram preenchidos automaticamente.",
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao buscar cliente:", error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Monitora mudanças no campo CPF
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === "cpf" && value.cpf) {
+        const cpf = value.cpf.replace(/\D/g, "");
+        if (cpf.length === 11) {
+          searchClientByCPF(cpf);
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
   });
 
   return (
@@ -66,7 +140,18 @@ export function ClientForm({
                 <FormItem>
                   <FormLabel>CPF</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <div className="relative">
+                      <Input
+                        {...field}
+                        disabled={isSearching}
+                        className={isSearching ? "bg-gray-100" : ""}
+                      />
+                      {isSearching && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <div className="animate-spin h-4 w-4 border-2 border-green-500 rounded-full border-t-transparent" />
+                        </div>
+                      )}
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

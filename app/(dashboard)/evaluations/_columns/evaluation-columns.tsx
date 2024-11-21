@@ -64,7 +64,7 @@ export const columns: ColumnDef<Client>[] = [
       const daysLeft = differenceInDays(new Date(endDate), new Date());
       return (
         <span className={daysLeft <= 5 ? "text-red-500" : "text-green-500"}>
-          {daysLeft} dias
+          {daysLeft + 1} dias
         </span>
       );
     },

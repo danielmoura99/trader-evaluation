@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+//import { PlatformButtons } from "./plataform-buttons";
 
 export const columns: ColumnDef<Client>[] = [
   {
@@ -70,4 +71,16 @@ export const columns: ColumnDef<Client>[] = [
       );
     },
   },
+  // {
+  //    id: "actions",
+  //    cell: ({ row }) => {
+  //      const client = row.original;
+  //      return (
+  //        <PlatformButtons
+  //          client={client}
+  //          onStartEvaluation={(id) => window.startEvaluation(id)}
+  //        />
+  //     );
+  //    },
+  /// },
 ];

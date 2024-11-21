@@ -33,3 +33,17 @@ export async function deleteClient(id: string) {
   });
   revalidatePath("/clients");
 }
+
+export async function getClientByCPF(cpf: string) {
+  try {
+    const client = await prisma.client.findFirst({
+      where: {
+        cpf: cpf.replace(/\D/g, ""), // Remove caracteres não numéricos
+      },
+    });
+    return client;
+  } catch (error) {
+    console.error("Erro ao buscar cliente por CPF:", error);
+    return null;
+  }
+}
