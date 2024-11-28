@@ -82,6 +82,17 @@ export function ClientForm({
           cancellationDate: undefined, // Nova avaliação, sem data de cancelamento
           // Garante o status correto para nova avaliação
           traderStatus: TraderStatus.WAITING,
+          contacts:
+            client.contacts?.map((contact) => ({
+              ...contact,
+              date: new Date(contact.date),
+              createdAt: new Date(contact.createdAt),
+              status: contact.status as
+                | "Sem contato"
+                | "Contatado"
+                | "Não Interessado"
+                | "Convertido",
+            })) || [],
         };
 
         form.reset(formattedClient);

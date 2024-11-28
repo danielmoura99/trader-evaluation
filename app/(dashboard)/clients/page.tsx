@@ -52,6 +52,17 @@ function ClientsContent() {
         observation: client.observation || "",
         // Garantir que traderStatus seja do tipo correto
         traderStatus: client.traderStatus as TraderStatusType,
+        contacts:
+          client.contacts?.map((contact) => ({
+            ...contact,
+            date: new Date(contact.date),
+            createdAt: new Date(contact.createdAt),
+            status: contact.status as
+              | "Sem contato"
+              | "Contatado"
+              | "Não Interessado"
+              | "Convertido",
+          })) || [],
       }));
       setClients(formattedClients);
     } catch {
