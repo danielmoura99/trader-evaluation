@@ -7,7 +7,18 @@ export const TraderStatus = {
   REJECTED: "Reprovado",
 } as const;
 
-// Exporte o tipo TraderStatusType
+// Tipo para o Contato
+export const contactSchema = z.object({
+  id: z.string(),
+  clientId: z.string(),
+  status: z.enum(["Sem contato", "Contatado", "Não Interessado", "Convertido"]),
+  date: z.date(),
+  notes: z.string(),
+  createdAt: z.date(),
+});
+
+export type Contact = z.infer<typeof contactSchema>;
+
 export type TraderStatusType = (typeof TraderStatus)[keyof typeof TraderStatus];
 
 export const clientSchema = z.object({
@@ -33,6 +44,7 @@ export const clientSchema = z.object({
   cancellationDate: z.date().optional().nullable(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
+  contacts: z.array(contactSchema).optional(), // Adicionando relação com contatos
 });
 
 export type Client = z.infer<typeof clientSchema>;

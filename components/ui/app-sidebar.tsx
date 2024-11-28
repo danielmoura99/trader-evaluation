@@ -40,6 +40,10 @@ const data = {
           title: "Clientes",
           url: "/clients",
         },
+        {
+          title: "Contato Reprovados",
+          url: "/reproved",
+        },
       ],
     },
     {

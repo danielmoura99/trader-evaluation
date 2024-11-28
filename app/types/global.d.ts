@@ -6,5 +6,6 @@ declare global {
     deleteClient: (id: string) => void;
     startEvaluation: (id: string) => void;
     openFinishEvaluation: (client: Client) => void;
+    contactClient: (client: Client) => void;
   }
 }
