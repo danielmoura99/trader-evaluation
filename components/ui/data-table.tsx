@@ -7,6 +7,8 @@ import {
   useReactTable,
   getPaginationRowModel,
   getFilteredRowModel,
+  getSortedRowModel,
+  SortingState,
 } from "@tanstack/react-table";
 
 import {
@@ -35,6 +37,7 @@ export function DataTable<TData, TValue>({
   searchColumn,
 }: DataTableProps<TData, TValue>) {
   const [filtering, setFiltering] = useState("");
+  const [sorting, setSorting] = useState<SortingState>([]);
 
   const table = useReactTable({
     data,
@@ -42,10 +45,13 @@ export function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     state: {
       globalFilter: filtering,
+      sorting,
     },
     onGlobalFilterChange: setFiltering,
+    onSortingChange: setSorting,
   });
 
   return (
@@ -74,12 +80,25 @@ export function DataTable<TData, TValue>({
                     key={header.id}
                     className="h-11 px-4 text-xs font-medium text-zinc-400 whitespace-nowrap"
                   >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
+                    {header.isPlaceholder ? null : (
+                      <div
+                        className={
+                          header.column.getCanSort()
+                            ? "cursor-pointer select-none"
+                            : ""
+                        }
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {flexRender(
                           header.column.columnDef.header,
                           header.getContext()
                         )}
+                        {{
+                          asc: "",
+                          desc: "",
+                        }[header.column.getIsSorted() as string] ?? null}
+                      </div>
+                    )}
                   </TableHead>
                 ))}
               </TableRow>

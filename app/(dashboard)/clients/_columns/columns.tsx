@@ -1,7 +1,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Client } from "@/app/types";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Pencil, Trash } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal, Pencil, Trash } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,7 +15,17 @@ import { ptBR } from "date-fns/locale";
 export const columns: ColumnDef<Client>[] = [
   {
     accessorKey: "name",
-    header: "Nome",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Nome
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
   },
   {
     accessorKey: "cpf",
@@ -43,7 +53,15 @@ export const columns: ColumnDef<Client>[] = [
   },
   {
     accessorKey: "startDate",
-    header: "Data Início",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Data Início
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: ({ row }) => {
       const date = row.getValue("startDate");
       if (!date) return "-";
@@ -58,7 +76,15 @@ export const columns: ColumnDef<Client>[] = [
   },
   {
     accessorKey: "endDate",
-    header: "Data Fim",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Data Fim
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: ({ row }) => {
       const date = row.getValue("endDate");
       if (!date) return "-";
@@ -72,7 +98,7 @@ export const columns: ColumnDef<Client>[] = [
   },
   {
     accessorKey: "birthDate",
-    header: "Data Nascimento",
+    header: "Data de Nascimento",
     cell: ({ row }) => {
       const date = row.getValue("birthDate");
       if (!date) return "-";
@@ -98,7 +124,15 @@ export const columns: ColumnDef<Client>[] = [
   },
   {
     accessorKey: "cancellationDate",
-    header: "Data Cancelamento",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Data de Cancelamento
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: ({ row }) => {
       const date = row.getValue("cancellationDate");
       if (!date) return "-";

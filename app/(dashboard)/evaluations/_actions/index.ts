@@ -53,6 +53,7 @@ export async function finishEvaluation(
       traderStatus:
         status === "Aprovado" ? TraderStatus.APPROVED : TraderStatus.REJECTED,
       endDate: new Date(),
+      cancellationDate: new Date(),
     },
   });
   revalidatePath("/evaluations");

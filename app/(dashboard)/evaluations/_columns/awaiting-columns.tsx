@@ -1,10 +1,10 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Client } from "@/app/types";
-import { Button } from "@/components/ui/button";
-import { Play } from "lucide-react";
+//import { Button } from "@/components/ui/button";
+//import { Play } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-//import { PlatformButtons } from "./plataform-buttons";
+import { PlatformButtons } from "./plataform-buttons";
 
 export const columns: ColumnDef<Client>[] = [
   {
@@ -57,30 +57,12 @@ export const columns: ColumnDef<Client>[] = [
     id: "actions",
     cell: ({ row }) => {
       const client = row.original;
-
       return (
-        <Button
-          onClick={() => window.startEvaluation(client.id!)}
-          variant="outline"
-          size="sm"
-          className="bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20"
-        >
-          <Play className="h-4 w-4 mr-2" />
-          Liberar Plataforma
-        </Button>
+        <PlatformButtons
+          client={client}
+          onStartEvaluation={(id) => window.startEvaluation(id)}
+        />
       );
     },
   },
-  // {
-  //    id: "actions",
-  //    cell: ({ row }) => {
-  //      const client = row.original;
-  //      return (
-  //        <PlatformButtons
-  //          client={client}
-  //          onStartEvaluation={(id) => window.startEvaluation(id)}
-  //        />
-  //     );
-  //    },
-  /// },
 ];

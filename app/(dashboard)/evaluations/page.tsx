@@ -155,6 +155,11 @@ export default function EvaluationsPage() {
             </DialogTitle>
           </DialogHeader>
           <FinishEvaluationForm
+            client={{
+              id: selectedClient?.id ?? "",
+              cpf: selectedClient?.cpf ?? "",
+              platform: selectedClient?.platform ?? "",
+            }}
             onSubmit={handleFinishEvaluation}
             onCancel={() => setFinishDialogOpen(false)}
           />
