@@ -2,33 +2,31 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
 
-const brokerApi = axios.create({
-  baseURL: "https://api-broker4.nelogica.com.br/",
-  headers: {
-    Origin: process.env.NEXT_PUBLIC_APP_URL || "tradershouse.com.br",
-    "Content-Type": "application/json",
-  },
-});
+const API_GATEWAY_URL =
+  "https://yysw63amv6.execute-api.sa-east-1.amazonaws.com/prod/proxy";
 
 export async function POST(req: Request) {
   try {
     const payload = await req.json();
     console.log("Payload de cancelamento recebido:", payload);
 
-    const brokerPayload = {
-      request: "prop_trading_cancel_user_subscription",
-      document: payload.document,
-      subscriptionPlanId: payload.subscriptionPlanId,
-      testAccount: payload.testAccount,
-      authenticationCode: "2B295526980F475BA2A608C8C1C4F8DF",
-    };
+    const response = await axios.post(
+      API_GATEWAY_URL,
+      {
+        request: "prop_trading_cancel_user_subscription",
+        document: payload.document,
+        subscriptionPlanId: payload.subscriptionPlanId,
+        testAccount: payload.testAccount,
+        authenticationCode: "2B295526980F475BA2A608C8C1C4F8DF",
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-    console.log("Enviando cancelamento para corretora:", brokerPayload);
-
-    const response = await brokerApi.post("request.php", brokerPayload);
-
-    console.log("Resposta da corretora:", response.data);
-
+    console.log("Resposta do proxy:", response.data);
     return NextResponse.json(response.data);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
