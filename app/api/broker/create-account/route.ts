@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import axios from "axios";
 
 const API_GATEWAY_URL =
-  "https://yysw63amv6.execute-api.sa-east-1.amazonaws.com/prod/proxy";
+  "https://m043hg2via.execute-api.sa-east-1.amazonaws.com/prod/test";
 
 export async function POST(req: Request) {
   try {
