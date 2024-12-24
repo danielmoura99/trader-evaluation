@@ -1,4 +1,4 @@
-// app/api/auth/[...nextauth]/auth.ts
+// trader-evaluation/app/api/auth/[...nextauth]/auth.ts
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
