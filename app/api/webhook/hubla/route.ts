@@ -19,16 +19,13 @@ export async function POST(req: NextRequest) {
       webhookSecret ? "Sim" : "Não"
     );
 
-    // Log detalhado dos headers
+    // Log dos headers
     const allHeaders = Array.from(req.headers.entries());
     console.log("[Hubla Webhook] Headers completos:", allHeaders);
 
     // Lê o payload
     const payload = await req.text();
-    console.log(
-      "[Hubla Webhook] Payload recebido (primeiros 200 caracteres):",
-      payload.substring(0, 200) + "..."
-    );
+    console.log("[Hubla Webhook] Payload completo:", payload);
 
     // Verifica assinatura apenas em produção
     if (!isSandbox) {
@@ -66,14 +63,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Parse e validação do webhook data
+    // Parse do payload
     let webhookData: HublaWebhookPayload;
     try {
-      webhookData = JSON.parse(payload) as HublaWebhookPayload;
+      webhookData = JSON.parse(payload);
       console.log("[Hubla Webhook] Dados processados:", {
-        event_type: webhookData.event_type,
-        created_at: webhookData.created_at,
-        payment_id: webhookData.data?.id,
+        type: webhookData.type,
+        productName: webhookData.event?.product?.name,
+        userId: webhookData.event?.user?.id,
       });
     } catch (parseError) {
       console.error(
@@ -90,12 +87,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Verifica tipo do evento
-    if (webhookData.event_type !== "payment.succeeded") {
-      console.log("[Hubla Webhook] Evento ignorado:", webhookData.event_type);
+    if (webhookData.type !== "invoice.payment_succeeded") {
+      console.log("[Hubla Webhook] Evento ignorado:", webhookData.type);
       return Response.json(
         {
           message: "Evento ignorado",
-          event_type: webhookData.event_type,
+          type: webhookData.type,
         },
         { status: 200 }
       );
@@ -119,22 +116,25 @@ export async function POST(req: NextRequest) {
     }
 
     console.log("[Hubla Webhook] Dados do pagamento extraídos:", {
-      paymentId: paymentData.paymentId,
+      hublaPaymentId: paymentData.hublaPaymentId,
       platform: paymentData.platform,
       plan: paymentData.plan,
       customerEmail: paymentData.customerEmail,
+      amount: paymentData.amount,
     });
 
-    // Processa o pagamento e gera o link
-    const formUrl = await hublaService.processPayment(paymentData);
-    console.log("[Hubla Webhook] Link do formulário gerado:", formUrl);
+    // Processa o pagamento
+    const payment = await hublaService.processPayment(paymentData);
+    console.log("[Hubla Webhook] Pagamento processado:", {
+      id: payment.id,
+      status: payment.status,
+    });
 
     console.log("=== FIM DO PROCESSAMENTO DO WEBHOOK ===\n");
 
     return Response.json({
       message: "Pagamento processado com sucesso",
-      formUrl,
-      paymentId: paymentData.paymentId,
+      paymentId: payment.id,
       sandbox: isSandbox,
     });
   } catch (error) {
