@@ -8,6 +8,10 @@ export async function POST(req: NextRequest) {
     console.log("\n=== INÍCIO DO PROCESSAMENTO DO WEBHOOK ===");
     console.log("[Hubla Webhook] Iniciando processamento...");
 
+    // Verificar se é ambiente sandbox
+    const isSandbox = req.headers.get("x-hubla-sandbox") === "true";
+    console.log("[Hubla Webhook] Ambiente sandbox:", isSandbox);
+
     // Verificar secret configurado
     const webhookSecret = process.env.HUBLA_WEBHOOK_SECRET;
     console.log(
@@ -15,62 +19,50 @@ export async function POST(req: NextRequest) {
       webhookSecret ? "Sim" : "Não"
     );
 
-    if (!webhookSecret) {
-      console.error("[Hubla Webhook] HUBLA_WEBHOOK_SECRET não configurado");
-      return Response.json(
-        {
-          error: "Configuração inválida",
-          message: "HUBLA_WEBHOOK_SECRET não configurado",
-        },
-        { status: 500 }
-      );
-    }
-
     // Log detalhado dos headers
     const allHeaders = Array.from(req.headers.entries());
     console.log("[Hubla Webhook] Headers completos:", allHeaders);
 
-    // Verifica assinatura
-    const signature = req.headers.get("x-hubla-signature");
-    console.log("[Hubla Webhook] Assinatura recebida:", signature);
-
-    if (!signature) {
-      console.log(
-        "[Hubla Webhook] Erro: Assinatura ausente no header x-hubla-signature"
-      );
-      return Response.json(
-        {
-          error: "Assinatura ausente",
-          message: "O header x-hubla-signature é obrigatório para validação",
-        },
-        { status: 401 }
-      );
-    }
-
-    // Lê e loga o payload
+    // Lê o payload
     const payload = await req.text();
     console.log(
       "[Hubla Webhook] Payload recebido (primeiros 200 caracteres):",
       payload.substring(0, 200) + "..."
     );
 
-    const hublaService = new HublaService();
+    // Verifica assinatura apenas em produção
+    if (!isSandbox) {
+      const signature = req.headers.get("x-hubla-signature");
+      console.log("[Hubla Webhook] Assinatura recebida:", signature);
 
-    // Verifica a assinatura com mais detalhes
-    const isValid = hublaService.verifyWebhookSignature(payload, signature);
-    console.log(
-      "[Hubla Webhook] Resultado da validação da assinatura:",
-      isValid
-    );
+      if (!signature) {
+        console.log(
+          "[Hubla Webhook] Erro: Assinatura ausente no header x-hubla-signature"
+        );
+        return Response.json(
+          {
+            error: "Assinatura ausente",
+            message: "O header x-hubla-signature é obrigatório para validação",
+          },
+          { status: 401 }
+        );
+      }
 
-    if (!isValid) {
-      console.log("[Hubla Webhook] Erro: Assinatura inválida");
-      return Response.json(
-        {
-          error: "Assinatura inválida",
-          message: "A assinatura fornecida não corresponde ao payload",
-        },
-        { status: 401 }
+      const hublaService = new HublaService();
+      const isValid = hublaService.verifyWebhookSignature(payload, signature);
+      if (!isValid) {
+        console.log("[Hubla Webhook] Erro: Assinatura inválida");
+        return Response.json(
+          {
+            error: "Assinatura inválida",
+            message: "A assinatura fornecida não corresponde ao payload",
+          },
+          { status: 401 }
+        );
+      }
+    } else {
+      console.log(
+        "[Hubla Webhook] Pulando verificação de assinatura em ambiente sandbox"
       );
     }
 
@@ -109,6 +101,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const hublaService = new HublaService();
+
     // Extrai e valida dados do pagamento
     const paymentData = hublaService.extractPaymentData(webhookData);
     if (!paymentData) {
@@ -141,11 +135,11 @@ export async function POST(req: NextRequest) {
       message: "Pagamento processado com sucesso",
       formUrl,
       paymentId: paymentData.paymentId,
+      sandbox: isSandbox,
     });
   } catch (error) {
     console.error("[Hubla Webhook] Erro crítico ao processar webhook:", error);
 
-    // Log mais detalhado do erro
     if (error instanceof Error) {
       console.error("[Hubla Webhook] Detalhes do erro:", {
         message: error.message,
