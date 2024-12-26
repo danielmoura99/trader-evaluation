@@ -12,6 +12,19 @@ export async function POST(req: NextRequest) {
     const isSandbox = req.headers.get("x-hubla-sandbox") === "true";
     console.log("[Hubla Webhook] Ambiente sandbox:", isSandbox);
 
+    // Verificar token da Hubla
+    const hublaToken = req.headers.get("x-hubla-token");
+    if (!hublaToken || hublaToken !== process.env.HUBLA_WEBHOOK_SECRET) {
+      console.log("[Hubla Webhook] Token inválido ou ausente");
+      return Response.json(
+        {
+          error: "Token inválido",
+          message: "O token fornecido não é válido",
+        },
+        { status: 401 }
+      );
+    }
+
     // Log dos headers
     const allHeaders = Array.from(req.headers.entries());
     console.log("[Hubla Webhook] Headers completos:", allHeaders);
@@ -19,26 +32,6 @@ export async function POST(req: NextRequest) {
     // Lê o payload
     const payload = await req.text();
     console.log("[Hubla Webhook] Payload completo:", payload);
-
-    // Verifica assinatura apenas em produção
-    if (!isSandbox) {
-      const signature = req.headers.get("x-hubla-signature");
-      if (!signature) {
-        console.log("[Hubla Webhook] Erro: Assinatura ausente");
-        return Response.json({ error: "Assinatura ausente" }, { status: 401 });
-      }
-
-      const hublaService = new HublaService();
-      const isValid = hublaService.verifyWebhookSignature(payload, signature);
-      if (!isValid) {
-        console.log("[Hubla Webhook] Erro: Assinatura inválida");
-        return Response.json({ error: "Assinatura inválida" }, { status: 401 });
-      }
-    } else {
-      console.log(
-        "[Hubla Webhook] Pulando verificação de assinatura em ambiente sandbox"
-      );
-    }
 
     // Parse do payload
     let webhookData: HublaWebhookPayload;
@@ -48,6 +41,8 @@ export async function POST(req: NextRequest) {
         type: webhookData.type,
         productName: webhookData.event.product.name,
         userId: webhookData.event.user.id,
+        invoiceId: webhookData.event.invoice.id,
+        status: webhookData.event.invoice.status,
       });
     } catch (parseError) {
       console.error(
@@ -57,6 +52,7 @@ export async function POST(req: NextRequest) {
       return Response.json(
         {
           error: "Payload inválido",
+          message: "Não foi possível processar o payload recebido",
         },
         { status: 400 }
       );
@@ -68,6 +64,7 @@ export async function POST(req: NextRequest) {
       return Response.json(
         {
           message: "Evento ignorado",
+          type: webhookData.type,
         },
         { status: 200 }
       );
@@ -78,31 +75,60 @@ export async function POST(req: NextRequest) {
     // Extrai e valida dados do pagamento
     const paymentData = hublaService.extractPaymentData(webhookData);
     if (!paymentData) {
-      console.log("[Hubla Webhook] Erro: Dados do pagamento inválidos");
+      console.log(
+        "[Hubla Webhook] Erro: Dados do pagamento inválidos ou incompletos"
+      );
       return Response.json(
         {
           error: "Dados inválidos",
+          message: "Não foi possível extrair os dados necessários do pagamento",
         },
         { status: 400 }
       );
     }
 
+    console.log("[Hubla Webhook] Dados do pagamento extraídos:", {
+      hublaPaymentId: paymentData.hublaPaymentId,
+      platform: paymentData.platform,
+      plan: paymentData.plan,
+      customerEmail: paymentData.customerEmail,
+      amount: paymentData.amount,
+      status: paymentData.status,
+    });
+
     // Processa o pagamento
-    const savedPayment = await hublaService.processPayment(paymentData);
+    const payment = await hublaService.processPayment(paymentData);
+    console.log("[Hubla Webhook] Pagamento processado:", {
+      id: payment.id,
+      hublaPaymentId: payment.hublaPaymentId,
+      status: payment.status,
+      platform: payment.platform,
+      plan: payment.plan,
+    });
 
     console.log("=== FIM DO PROCESSAMENTO DO WEBHOOK ===\n");
 
     return Response.json({
       message: "Pagamento processado com sucesso",
-      paymentId: savedPayment.hublaPaymentId,
+      paymentId: payment.id,
       sandbox: isSandbox,
     });
   } catch (error) {
-    console.error("[Hubla Webhook] Erro crítico:", error);
+    console.error("[Hubla Webhook] Erro crítico ao processar webhook:", error);
+
+    if (error instanceof Error) {
+      console.error("[Hubla Webhook] Detalhes do erro:", {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
+    }
+
     return Response.json(
       {
         error: "Erro interno do servidor",
         message: error instanceof Error ? error.message : "Erro desconhecido",
+        timestamp: new Date().toISOString(),
       },
       { status: 500 }
     );
