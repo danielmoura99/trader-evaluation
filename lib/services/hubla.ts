@@ -36,12 +36,24 @@ export class HublaService {
         return null;
       }
 
+      // Log para debug
+      console.log("Processando webhook:", {
+        tipo: webhook.type,
+        produto: webhook.event.product.name,
+        usuario: webhook.event.user,
+      });
+
       // Extrair plataforma e plano do nome do produto
       const productParts = webhook.event.product.name
         .split("-")
         .map((p) => p.trim());
-      const planPart = productParts[0]; // "Trader 50K"
-      const platformPart = productParts[1]?.split("|")[0]?.trim(); // "Profit One"
+      const planPart = productParts[0]; // "Trader 50K" ou "Trader Estrategista"
+      const platformPart = productParts[1]?.split("|")[0]?.trim(); // "Profit One" ou "Profit Pro"
+
+      // Tratamento para documento (pode não existir em ambiente de teste)
+      const customerDocument = webhook.event.user.document
+        ? webhook.event.user.document.replace(/[^\d]/g, "")
+        : "00000000000"; // CPF padrão para testes
 
       return {
         hublaPaymentId: webhook.event.invoice.id,
@@ -52,7 +64,7 @@ export class HublaService {
           `${webhook.event.user.firstName} ${webhook.event.user.lastName}`.trim(),
         customerEmail: webhook.event.user.email,
         customerPhone: webhook.event.user.phone,
-        customerDocument: webhook.event.user.document.replace(/[^\d]/g, ""),
+        customerDocument: customerDocument,
         platform: platformPart || "Não especificado",
         plan: planPart || "Não especificado",
         status: webhook.event.invoice.status,
@@ -61,6 +73,7 @@ export class HublaService {
       };
     } catch (error) {
       console.error("Erro ao extrair dados do webhook:", error);
+      console.error("Payload recebido:", webhook);
       return null;
     }
   }
@@ -103,6 +116,8 @@ export class HublaService {
         id: payment.id,
         hublaPaymentId: payment.hublaPaymentId,
         status: payment.status,
+        platform: payment.platform,
+        plan: payment.plan,
       });
 
       return payment;
