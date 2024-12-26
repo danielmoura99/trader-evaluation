@@ -5,6 +5,7 @@ export interface HublaUser {
   lastName: string;
   email: string;
   phone: string;
+  document: string; // Adicionado o campo document
 }
 
 export interface HublaInvoice {
@@ -14,8 +15,11 @@ export interface HublaInvoice {
   status: string;
   amount: {
     totalCents: number;
+    subtotalCents: number;
+    discountCents: number;
   };
   saleDate: string;
+  paymentMethod: string;
 }
 
 export interface HublaProduct {
@@ -41,8 +45,10 @@ export interface HublaPaymentData {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  customerDocument: string; // Adicionado o campo document
   platform: string;
   plan: string;
   status: string;
   saleDate: Date;
+  paymentMethod: string;
 }
