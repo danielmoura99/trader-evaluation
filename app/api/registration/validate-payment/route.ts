@@ -4,26 +4,46 @@ import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
+    console.log("[Validate Payment] Iniciando validação...");
+
+    // Verificar API Key
+    const authHeader = req.headers.get("authorization");
+    console.log("[Validate Payment] Auth Header:", authHeader);
+
+    if (!authHeader?.startsWith("Bearer ")) {
+      console.log("[Validate Payment] API Key não fornecida");
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const apiKey = authHeader.replace("Bearer ", "");
+    if (apiKey !== process.env.API_KEY) {
+      console.log("[Validate Payment] API Key inválida");
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     // Obter hublaPaymentId da query
     const { searchParams } = new URL(req.url);
     const hublaPaymentId = searchParams.get("paymentId");
+    console.log("[Validate Payment] PaymentId recebido:", hublaPaymentId);
 
     if (!hublaPaymentId) {
       return Response.json(
         {
-          error: "ID do pagamento não fornecido",
+          error: "PaymentId não fornecido",
         },
         { status: 400 }
       );
     }
 
     // Buscar pagamento
-    const payment = await prisma.payment.findUnique({
+    const payment = await prisma.payment.findFirst({
       where: {
         hublaPaymentId: hublaPaymentId,
-        status: "received", // Apenas pagamentos recebidos e não processados
+        status: "received",
       },
     });
+
+    console.log("[Validate Payment] Payment encontrado:", payment);
 
     if (!payment) {
       return Response.json(
