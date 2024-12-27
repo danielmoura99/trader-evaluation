@@ -20,7 +20,23 @@ interface RegistrationData {
 
 export async function POST(req: NextRequest) {
   try {
+    console.log("[Process Registration] Iniciando processamento...");
+
+    // Verificar API Key
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      console.log("[Process Registration] API Key não fornecida");
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const apiKey = authHeader.replace("Bearer ", "");
+    if (apiKey !== process.env.API_KEY) {
+      console.log("[Process Registration] API Key inválida");
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const data: RegistrationData = await req.json();
+    console.log("[Process Registration] Dados recebidos:", data);
 
     // Validar o pagamento
     const payment = await prisma.payment.findUnique({
@@ -30,7 +46,12 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    console.log("[Process Registration] Payment encontrado:", payment);
+
     if (!payment) {
+      console.log(
+        "[Process Registration] Pagamento não encontrado ou já processado"
+      );
       return Response.json(
         {
           error: "Pagamento não encontrado ou já processado",
@@ -46,12 +67,18 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    console.log(
+      "[Process Registration] Cliente existente:",
+      existingClient ? "Sim" : "Não"
+    );
+
     // Iniciar transação para garantir consistência
     const result = await prisma.$transaction(async (tx) => {
       let userId: string | undefined;
 
       // Se for novo cliente, criar conta no portal
       if (!existingClient) {
+        console.log("[Process Registration] Criando novo usuário...");
         // Criar senha inicial (últimos 4 dígitos do CPF)
         const initialPassword = data.cpf.slice(-4);
         const hashedPassword = await hash(initialPassword, 10);
@@ -67,8 +94,10 @@ export async function POST(req: NextRequest) {
         });
 
         userId = user.id;
+        console.log("[Process Registration] Novo usuário criado:", userId);
       }
 
+      console.log("[Process Registration] Criando nova avaliação...");
       // Criar nova avaliação
       const evaluation = await tx.client.create({
         data: {
@@ -86,6 +115,8 @@ export async function POST(req: NextRequest) {
         },
       });
 
+      console.log("[Process Registration] Avaliação criada:", evaluation.id);
+
       // Atualizar status do pagamento
       await tx.payment.update({
         where: { id: payment.id },
@@ -95,7 +126,14 @@ export async function POST(req: NextRequest) {
         },
       });
 
+      console.log("[Process Registration] Status do pagamento atualizado");
+
       return { evaluation, userId };
+    });
+
+    console.log("[Process Registration] Processo finalizado com sucesso:", {
+      evaluationId: result.evaluation.id,
+      isNewUser: !!result.userId,
     });
 
     return Response.json({
@@ -105,7 +143,7 @@ export async function POST(req: NextRequest) {
       initialPassword: result.userId ? data.cpf.slice(-4) : undefined,
     });
   } catch (error) {
-    console.error("[Process Registration] Erro:", error);
+    console.error("[Process Registration] Erro crítico:", error);
     return Response.json(
       {
         error: "Erro interno do servidor",
