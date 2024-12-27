@@ -98,19 +98,25 @@ export async function POST(req: NextRequest) {
 
     // Processa o pagamento
     const payment = await hublaService.processPayment(paymentData);
+    const registrationUrl = `${
+      process.env.CLIENT_PORTAL_URL || "http://localhost:3000"
+    }/registration/${payment.hublaPaymentId}`;
+
     console.log("[Hubla Webhook] Pagamento processado:", {
       id: payment.id,
       hublaPaymentId: payment.hublaPaymentId,
       status: payment.status,
       platform: payment.platform,
       plan: payment.plan,
+      registrationUrl,
     });
 
     console.log("=== FIM DO PROCESSAMENTO DO WEBHOOK ===\n");
 
     return Response.json({
       message: "Pagamento processado com sucesso",
-      paymentId: payment.id,
+      paymentId: payment.hublaPaymentId,
+      registrationUrl,
       sandbox: isSandbox,
     });
   } catch (error) {
