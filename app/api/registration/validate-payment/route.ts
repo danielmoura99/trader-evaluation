@@ -8,17 +8,35 @@ export async function GET(req: NextRequest) {
 
     // Verificar API Key
     const authHeader = req.headers.get("authorization");
-    console.log("[Validate Payment] Auth Header:", authHeader);
+    console.log("[Validate Payment] Auth Header recebido:", authHeader);
+    console.log(
+      "[Validate Payment] API Key configurada:",
+      !!process.env.API_KEY
+    );
 
     if (!authHeader?.startsWith("Bearer ")) {
-      console.log("[Validate Payment] API Key não fornecida");
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+      console.log("[Validate Payment] Formato de autorização inválido");
+      return Response.json(
+        {
+          error: "Unauthorized",
+          message: "Formato de autorização inválido",
+        },
+        { status: 401 }
+      );
     }
 
     const apiKey = authHeader.replace("Bearer ", "");
     if (apiKey !== process.env.API_KEY) {
       console.log("[Validate Payment] API Key inválida");
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+      console.log("Recebida:", apiKey);
+      console.log("Esperada:", process.env.API_KEY);
+      return Response.json(
+        {
+          error: "Unauthorized",
+          message: "API Key inválida",
+        },
+        { status: 401 }
+      );
     }
 
     // Obter hublaPaymentId da query
@@ -43,7 +61,10 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    console.log("[Validate Payment] Payment encontrado:", payment);
+    console.log(
+      "[Validate Payment] Payment encontrado:",
+      payment ? "Sim" : "Não"
+    );
 
     if (!payment) {
       return Response.json(
@@ -70,6 +91,7 @@ export async function GET(req: NextRequest) {
     return Response.json(
       {
         error: "Erro interno do servidor",
+        details: error instanceof Error ? error.message : "Erro desconhecido",
       },
       { status: 500 }
     );
