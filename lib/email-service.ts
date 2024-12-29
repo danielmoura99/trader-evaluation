@@ -34,7 +34,7 @@ export async function sendRegistrationEmail({
         <div style="max-width: 600px; margin: 0 auto; background-color: #121212; color: #ffffff; font-family: Arial, sans-serif;">
           <!-- Header com logo -->
           <div style="text-align: center; padding: 20px;">
-            <img src="https://trader-evaluation.vercel.app/images/topo-email.png" alt="Traders House" style="max-width: 150px; display: block;" width="150" height="auto">
+            <img src="https://imgur.com/wuqnaT8" alt="Traders House" style="max-width: 150px; display: block;" width="150" height="auto">
             <div style="color: #ffffff; margin-top: 10px;">Mesa Proprietária</div>
           </div>
 
