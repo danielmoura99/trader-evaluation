@@ -1,5 +1,7 @@
 // trader-evaluation/lib/email-service.ts
 import nodemailer, { TransportOptions } from "nodemailer";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -17,6 +19,22 @@ interface SendRegistrationEmailParams {
   registrationUrl: string;
 }
 
+async function getImageAsBase64() {
+  try {
+    const imagePath = join(process.cwd(), "public", "images", "topo-email.png");
+    const imageBuffer = readFileSync(imagePath);
+    return `data:image/png;base64,${imageBuffer.toString("base64")}`;
+  } catch (error) {
+    console.error("Erro ao ler imagem:", error);
+    // Log do caminho completo para debug
+    console.log(
+      "Tentando ler imagem em:",
+      join(process.cwd(), "public", "images", "topo-email.png")
+    );
+    return ""; // Retorna vazio em caso de erro
+  }
+}
+
 export async function sendRegistrationEmail({
   customerName,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -24,6 +42,7 @@ export async function sendRegistrationEmail({
   registrationUrl,
 }: SendRegistrationEmailParams) {
   try {
+    const imageBase64 = await getImageAsBase64();
     const info = await transporter.sendMail({
       from:
         process.env.EMAIL_FROM || '"Traders House" <noreply@tradershouse.com>',
@@ -31,12 +50,12 @@ export async function sendRegistrationEmail({
       to: "daniel.sousa.dsm@gmail.com", // Teste
       subject: "Complete seu Cadastro - Traders House",
       html: `
-        <div style="max-width: 600px; margin: 0 auto; background-color: #121212; color: #ffffff; font-family: Arial, sans-serif;">
-          <!-- Header com logo -->
-          <div style="text-align: center; padding: 20px;">
-            <img src="https://imgur.com/wuqnaT8" alt="Traders House" style="max-width: 150px; display: block;" width="150" height="auto">
-            <div style="color: #ffffff; margin-top: 10px;">Mesa Proprietária</div>
-          </div>
+      <div style="max-width: 600px; margin: 0 auto; background-color: #121212; color: #ffffff; font-family: Arial, sans-serif;">
+        <!-- Header com logo -->
+        <div style="text-align: center; padding: 20px;">
+          <img src="${imageBase64}" alt="Traders House" style="max-width: 150px; display: block; margin: 0 auto;">
+          <div style="color: #ffffff; margin-top: 10px;">Mesa Proprietária</div>
+        </div>
 
           <!-- Conteúdo Principal -->
           <div style="padding: 20px 30px;">
