@@ -2,6 +2,7 @@
 import { HublaService } from "@/lib/services/hubla";
 import { HublaWebhookPayload } from "@/app/types/hubla";
 import { NextRequest } from "next/server";
+import { sendRegistrationEmail } from "@/lib/email-service"; // Adicionar este import
 
 export async function POST(req: NextRequest) {
   try {
@@ -101,6 +102,23 @@ export async function POST(req: NextRequest) {
     const registrationUrl = `${
       process.env.CLIENT_PORTAL_URL || "http://localhost:3000"
     }/registration/${payment.hublaPaymentId}`;
+
+    // Adicionar envio de email
+    try {
+      await sendRegistrationEmail({
+        customerName: paymentData.customerName,
+        customerEmail: paymentData.customerEmail,
+        registrationUrl,
+      });
+
+      console.log("[Hubla Webhook] Email de registro enviado com sucesso");
+    } catch (emailError) {
+      console.error(
+        "[Hubla Webhook] Erro ao enviar email de registro:",
+        emailError
+      );
+      // Não retornamos erro aqui para não impedir o processo caso o email falhe
+    }
 
     console.log("[Hubla Webhook] Pagamento processado:", {
       id: payment.id,
