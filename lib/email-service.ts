@@ -34,21 +34,21 @@ export async function sendRegistrationEmail({
         <div style="max-width: 600px; margin: 0 auto; background-color: #121212; color: #ffffff; font-family: Arial, sans-serif;">
           <!-- Header com logo -->
           <div style="text-align: center; padding: 20px;">
-            <img src="https://trader-evaluation.vercel.app/images/topo-email.png" alt="Traders House" style="max-width: 150px;">
+            <img src="https://trader-evaluation.vercel.app/images/topo-email.png" alt="Traders House" style="max-width: 150px; display: block;" width="150" height="auto">
             <div style="color: #ffffff; margin-top: 10px;">Mesa Proprietária</div>
           </div>
 
           <!-- Conteúdo Principal -->
           <div style="padding: 20px 30px;">
             <h1 style="color: #2fd82f; font-size: 24px; margin-bottom: 20px;">
-              Bem-vindo(a) à Traders House!
+              Bem-vindo(a) à Traders House !
             </h1>
             
             <p style="color: #ffffff; font-size: 16px; margin-bottom: 15px;">
               Olá ${customerName},
             </p>
             
-            <p style="color: #ffffff; font-size: 16px; margin-bottom: 25px;">
+            <p style="color: #ffffff; font-size: 14px; margin-bottom: 25px;">
               Seu pagamento foi confirmado com sucesso. Agora você está a um passo de começar sua jornada na mesa propietária da traders house. Clique no botão abaixo para completar seu cadastro e iniciar sua avaliação.
             </p>
             
@@ -61,17 +61,17 @@ export async function sendRegistrationEmail({
                         text-decoration: none;
                         border-radius: 4px;
                         font-weight: bold;
-                        font-size: 16px;">
+                        font-size: 14px;">
                 Completar Cadastro
               </a>
             </div>
 
-            <p style="color: #888888; font-size: 14px; text-align: center; margin-top: 25px;">
+            <p style="color: #888888; font-size: 12px; text-align: center; margin-top: 25px;">
               Este link é exclusivo para você e pode ser usado apenas uma vez, Se precisar de ajuda, entre em contato conosco nosso suporte.
             </p>
           </div>
 
-          <div style="text-align: center; padding: 20px; color: #6b7280; font-size: 12px;">
+          <div style="text-align: center; padding: 20px; color: #6b7280; font-size: 11px;">
             <p>Este é um email automático, por favor não responda.</p>
           </div>
 
