@@ -31,52 +31,58 @@ export async function sendRegistrationEmail({
       to: "daniel.sousa.dsm@gmail.com", // Teste
       subject: "Complete seu Cadastro - Traders House",
       html: `
-            <div style="background-color: #121212; color: #ffffff; font-family: Arial, sans-serif; margin: 0; padding: 0;">
-              <!-- Header -->
-              <div style="background: linear-gradient(to bottom, #1a1a1a, #121212); padding: 40px 20px; text-align: center;">
-                <img src="https://trader-evaluation.vercel.app/images/Topo de Email-01.png" alt="Traders House" style="max-width: 200px; margin-bottom: 20px;">
-                <div style="color: rgba(255,255,255,0.9); font-size: 16px;">Mesa Proprietária</div>
-              </div>
-    
-              <!-- Content -->
-              <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-                <h2 style="color: #2fd82f; margin-bottom: 30px; font-size: 24px;">Bem-vindo(a) à Traders House!</h2>
-                
-                <p style="color: rgba(255,255,255,0.9); line-height: 1.6; margin-bottom: 20px;">
-                  Olá ${customerName},
-                </p>
-                
-                <p style="color: rgba(255,255,255,0.9); line-height: 1.6; margin-bottom: 30px;">
-                  Seu pagamento foi confirmado com sucesso. Agora você está a um passo de começar sua jornada como trader.
-                </p>
-                
-                <div style="text-align: center; margin: 40px 0;">
-                  <a href="${registrationUrl}" 
-                     style="background-color: #2fd82f;
-                            color: #000000;
-                            padding: 16px 32px;
-                            text-decoration: none;
-                            border-radius: 5px;
-                            font-weight: bold;
-                            display: inline-block;
-                            transition: all 0.3s ease;">
-                    Completar Cadastro
-                  </a>
-                </div>
-                
-                <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin-top: 30px; text-align: center;">
-                  Este link é exclusivo para você e pode ser usado apenas uma vez.
-                </p>
-              </div>
-    
-              <!-- Footer -->
-              <div style="background: #1a1a1a; padding: 20px; text-align: center; color: rgba(255,255,255,0.6);">
-                <p style="font-size: 12px; margin: 0;">
-                  © 2024 Traders House. Todos os direitos reservados
-                </p>
-              </div>
+        <div style="max-width: 600px; margin: 0 auto; background-color: #121212; color: #ffffff; font-family: Arial, sans-serif;">
+          <!-- Header com logo -->
+          <div style="text-align: center; padding: 20px;">
+            <img src="https://trader-evaluation.vercel.app/images/topo-email.png" alt="Traders House" style="max-width: 150px;">
+            <div style="color: #ffffff; margin-top: 10px;">Mesa Proprietária</div>
+          </div>
+
+          <!-- Conteúdo Principal -->
+          <div style="padding: 20px 30px;">
+            <h1 style="color: #2fd82f; font-size: 24px; margin-bottom: 20px;">
+              Bem-vindo(a) à Traders House!
+            </h1>
+            
+            <p style="color: #ffffff; font-size: 16px; margin-bottom: 15px;">
+              Olá ${customerName},
+            </p>
+            
+            <p style="color: #ffffff; font-size: 16px; margin-bottom: 25px;">
+              Seu pagamento foi confirmado com sucesso. Agora você está a um passo de começar sua jornada na mesa propietária da traders house. Clique no botão abaixo para completar seu cadastro e iniciar sua avaliação.
+            </p>
+            
+            <!-- Botão -->
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${registrationUrl}" 
+                 style="background-color: #2fd82f;
+                        color: #000000;
+                        padding: 12px 24px;
+                        text-decoration: none;
+                        border-radius: 4px;
+                        font-weight: bold;
+                        font-size: 16px;">
+                Completar Cadastro
+              </a>
             </div>
-          `,
+
+            <p style="color: #888888; font-size: 14px; text-align: center; margin-top: 25px;">
+              Este link é exclusivo para você e pode ser usado apenas uma vez, Se precisar de ajuda, entre em contato conosco nosso suporte.
+            </p>
+          </div>
+
+          <div style="text-align: center; padding: 20px; color: #6b7280; font-size: 12px;">
+            <p>Este é um email automático, por favor não responda.</p>
+          </div>
+
+          <!-- Footer -->
+          <div style="border-top: 1px solid #333333; padding: 20px; text-align: center;">
+            <p style="color: #888888; font-size: 12px; margin: 0;">
+              © 2024 Traders House. Todos os direitos reservados
+            </p>
+          </div>
+        </div>
+      `,
     });
 
     console.log("[Email Service] Email de registro enviado:", info.messageId);
