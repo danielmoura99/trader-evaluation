@@ -62,7 +62,8 @@ export const RegistrationEmail = ({
 
 const main = {
   backgroundColor: "#121212",
-  margin: "0 auto",
+  fontFamily:
+    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
 };
 
 const container = {
@@ -73,14 +74,15 @@ const container = {
 
 const content = {
   padding: "20px 30px",
+  backgroundColor: "#121212",
 };
 
 const heading = {
   color: "#2fd82f",
   fontSize: "24px",
   fontWeight: "bold",
-  marginBottom: "20px",
   textAlign: "left" as const,
+  marginBottom: "20px",
 };
 
 const paragraph = {
@@ -92,22 +94,21 @@ const paragraph = {
 
 const button = {
   backgroundColor: "#2fd82f",
-  borderRadius: "4px",
   color: "#000000",
-  display: "inline-block",
+  padding: "12px 24px",
+  borderRadius: "4px",
+  textDecoration: "none",
   fontSize: "14px",
   fontWeight: "bold",
-  textDecoration: "none",
-  textAlign: "center" as const,
-  padding: "12px 24px",
   margin: "30px 0",
+  display: "inline-block",
 };
 
 const disclaimer = {
   color: "#888888",
   fontSize: "12px",
-  marginTop: "20px",
   textAlign: "center" as const,
+  marginTop: "20px",
 };
 
 const autoMessage = {
