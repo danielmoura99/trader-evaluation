@@ -8,7 +8,6 @@ import {
   Preview,
   Body,
   Section,
-  Img,
 } from "@react-email/components";
 import * as React from "react";
 
@@ -26,17 +25,6 @@ export const RegistrationEmail = ({
     <Preview>Complete seu Cadastro - Traders House</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Section style={header}>
-          <Img
-            src="/logo.png"
-            width="150"
-            height="35"
-            alt="Traders House"
-            style={logo}
-          />
-          <Text style={subtitle}>Mesa Proprietária</Text>
-        </Section>
-
         <Section style={content}>
           <Text style={heading}>Bem-vindo(a) à Traders House!</Text>
 
@@ -74,30 +62,13 @@ export const RegistrationEmail = ({
 
 const main = {
   backgroundColor: "#121212",
-  fontFamily:
-    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  margin: "0 auto",
 };
 
 const container = {
+  maxWidth: "600px",
   margin: "0 auto",
-  padding: "20px 0",
-  width: "600px",
-};
-
-const header = {
-  textAlign: "center" as const,
-  padding: "20px",
-};
-
-const logo = {
-  display: "block",
-  margin: "0 auto",
-};
-
-const subtitle = {
-  color: "#ffffff",
-  fontSize: "14px",
-  marginTop: "10px",
+  backgroundColor: "#121212",
 };
 
 const content = {
