@@ -24,6 +24,11 @@ export class HublaService {
 
   extractPaymentData(webhook: HublaWebhookPayload): HublaPaymentData | null {
     try {
+      // Ignora faturas de order bump (offer-1, offer-2)
+      if (webhook.event.invoice.id.includes("-offer-")) {
+        console.log("Order bump ignorado:", webhook.event.invoice.id);
+        return null;
+      }
       // Verificar tipo do evento e status
       if (
         webhook.type !== "invoice.payment_succeeded" ||

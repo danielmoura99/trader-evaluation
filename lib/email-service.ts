@@ -61,7 +61,7 @@ export async function sendRegistrationEmail({
             </div>
 
             <p style="color: #888888; font-size: 12px; text-align: center; margin-top: 25px;">
-              Este link é exclusivo para você e pode ser usado apenas uma vez, Se precisar de ajuda, entre em contato conosco nosso suporte.
+              Este link é exclusivo para você e pode ser usado apenas uma vez, Se precisar de ajuda, entre em contato com nosso suporte.
             </p>
           </div>
 
