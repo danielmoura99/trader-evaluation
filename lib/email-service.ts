@@ -1,5 +1,6 @@
 // trader-evaluation/lib/email-service.ts
 import nodemailer, { TransportOptions } from "nodemailer";
+import { join } from "path";
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -24,6 +25,8 @@ export async function sendRegistrationEmail({
   registrationUrl,
 }: SendRegistrationEmailParams) {
   try {
+    const imagePath = join(process.cwd(), "public", "images", "topo-email.png");
+
     const info = await transporter.sendMail({
       from:
         process.env.EMAIL_FROM || '"Traders House" <noreply@tradershouse.com>',
@@ -34,7 +37,7 @@ export async function sendRegistrationEmail({
         <div style="max-width: 600px; margin: 0 auto; background-color: #121212; color: #ffffff; font-family: Arial, sans-serif;">
           <!-- Header com logo -->
           <div style="text-align: center; padding: 20px;">
-            <img src="https://trader-evaluation.vercel.app/images/topo-email2-novo.png" alt="Traders House" style="max-width: 150px; display: block;" width="150" height="auto">
+            <img src="cid:logo" alt="Traders House" style="max-width: 150px; display: block;" width="150" height="auto">
             <div style="color: #ffffff; margin-top: 10px;">Mesa Proprietária</div>
           </div>
 
@@ -83,6 +86,18 @@ export async function sendRegistrationEmail({
           </div>
         </div>
       `,
+      attachments: [
+        {
+          filename: "topo-email.png",
+          path: imagePath,
+          cid: "logo", // mesmo nome usado no src da img
+        },
+      ],
+    });
+
+    console.log("[Email Service] Email enviado com attachment:", {
+      messageId: info.messageId,
+      attachments: true,
     });
 
     console.log("[Email Service] Email de registro enviado:", info.messageId);
