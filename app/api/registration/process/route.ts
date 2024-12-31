@@ -16,6 +16,7 @@ interface RegistrationData {
   birthDate: string;
   address?: string;
   zipCode?: string;
+  observation?: string; // Adicionar campo
 }
 
 export async function POST(req: NextRequest) {
@@ -70,6 +71,7 @@ export async function POST(req: NextRequest) {
         plan: data.plan,
         traderStatus: "Aguardando Inicio",
         startDate: new Date(data.startDate),
+        observation: data.observation, // Adicionar campo
       },
     });
 
