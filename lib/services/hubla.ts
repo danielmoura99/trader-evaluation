@@ -52,7 +52,14 @@ export class HublaService {
       const productParts = webhook.event.product.name
         .split("-")
         .map((p) => p.trim());
-      const planPart = productParts[0]; // "Trader 50K" ou "Trader Estrategista"
+      let planPart = productParts[0]; // "Trader 5K, 10K, 25K ou 50K"
+      if (planPart) {
+        // Verificar plano
+        const matchPlan = planPart.match(/Trader (\d+K)/);
+        if (matchPlan) {
+          planPart = `TC - ${matchPlan[1]}`;
+        }
+      }
       const platformPart = productParts[1]?.split("|")[0]?.trim(); // "Profit One" ou "Profit Pro"
 
       // Tratamento para documento (pode não existir em ambiente de teste)
