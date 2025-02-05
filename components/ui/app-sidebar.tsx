@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Bot, Command, SquareTerminal } from "lucide-react";
+import { Bot, BotIcon, Command, SquareTerminal } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -43,6 +43,18 @@ const data = {
         {
           title: "Contato Reprovados",
           url: "/reproved",
+        },
+      ],
+    },
+    {
+      title: "Conta Remunerada",
+      url: "#",
+      icon: BotIcon,
+      isActive: true,
+      items: [
+        {
+          title: "Traders",
+          url: "/paid-accounts",
         },
       ],
     },

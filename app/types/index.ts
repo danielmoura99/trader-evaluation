@@ -7,6 +7,13 @@ export const TraderStatus = {
   REJECTED: "Reprovado",
 } as const;
 
+// Adicionar novo status para PaidAccount
+export const PaidAccountStatus = {
+  WAITING: "Aguardando",
+  ACTIVE: "Ativo",
+  CANCELLED: "Cancelado",
+} as const;
+
 // Tipo para o Contato
 export const contactSchema = z.object({
   id: z.string(),
@@ -18,8 +25,28 @@ export const contactSchema = z.object({
 });
 
 export type Contact = z.infer<typeof contactSchema>;
-
 export type TraderStatusType = (typeof TraderStatus)[keyof typeof TraderStatus];
+export type PaidAccountStatusType =
+  (typeof PaidAccountStatus)[keyof typeof PaidAccountStatus];
+
+// Adicionar schema para PaidAccount
+export const paidAccountSchema = z.object({
+  id: z.string(),
+  clientId: z.string(),
+  platform: z.string(),
+  plan: z.string(),
+  status: z.enum([
+    PaidAccountStatus.WAITING,
+    PaidAccountStatus.ACTIVE,
+    PaidAccountStatus.CANCELLED,
+  ]),
+  startDate: z.date().nullable(),
+  endDate: z.date().nullable(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export type PaidAccount = z.infer<typeof paidAccountSchema>;
 
 export const clientSchema = z.object({
   id: z.string().optional(),
@@ -44,7 +71,8 @@ export const clientSchema = z.object({
   cancellationDate: z.date().optional().nullable(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
-  contacts: z.array(contactSchema).optional(), // Adicionando relação com contatos
+  contacts: z.array(contactSchema).optional(),
+  //paidAccount: paidAccountSchema.optional(),
 });
 
 export type Client = z.infer<typeof clientSchema>;

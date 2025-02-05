@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { TraderStatus } from "@/app/types";
+import { PaidAccountStatus, TraderStatus } from "@/app/types";
 
 export async function getAwaitingClients() {
   return await prisma.client.findMany({
@@ -56,5 +56,25 @@ export async function finishEvaluation(
       cancellationDate: new Date(),
     },
   });
+
+  // Se foi aprovado, criar PaidAccount
+  if (status === "Aprovado") {
+    const client = await prisma.client.findUnique({
+      where: { id: clientId },
+    });
+
+    if (client) {
+      await prisma.paidAccount.create({
+        data: {
+          clientId,
+          platform: client.platform,
+          plan: client.plan,
+          status: PaidAccountStatus.WAITING,
+        },
+      });
+    }
+  }
+
   revalidatePath("/evaluations");
+  revalidatePath("/paid-accounts");
 }

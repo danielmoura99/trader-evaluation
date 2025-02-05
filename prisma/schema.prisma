@@ -25,7 +25,8 @@ model Client {
   cancellationDate  DateTime?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
-  contacts          Contact[] // Nova relação
+  contacts          Contact[] 
+  paidAccount PaidAccount?
 
   @@map("clients")
 }
@@ -71,4 +72,19 @@ model Payment {
   updatedAt       DateTime  @updatedAt
 
   @@map("payments")
+}
+
+model PaidAccount {
+  id              String    @id @default(cuid())
+  clientId        String    @unique
+  client          Client    @relation(fields: [clientId], references: [id])
+  platform        String
+  plan            String
+  status          String    // "Aguardando", "Ativo", "Cancelado"
+  startDate       DateTime?
+  endDate         DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("paid_accounts")
 }
