@@ -17,10 +17,10 @@ export function validatePagarmeWebhook(
     hmac.update(payload);
     const calculatedSignature = hmac.digest("hex");
 
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(calculatedSignature)
-    );
+    console.log("Assinatura calculada:", calculatedSignature);
+    console.log("Assinatura recebida:", signature);
+
+    return calculatedSignature === signature; // Comparação direta em vez de timingSafeEqual
   } catch (error) {
     console.error("Erro na validação do webhook:", error);
     return false;

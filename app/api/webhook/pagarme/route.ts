@@ -10,13 +10,18 @@ export async function POST(req: NextRequest) {
     console.log("\n=== INÍCIO DO PROCESSAMENTO DO WEBHOOK PAGAR.ME ===");
 
     // 1. Validar a assinatura do webhook
-    const signature = req.headers.get("x-hub-signature");
+    const signature = req.headers.get("x-signature"); // Mudamos de x-hub-signature para x-signature
     if (!signature) {
-      console.log("[Pagar.me Webhook] Assinatura ausente");
+      console.log("[Pagar.me Webhook] Assinatura ausente:", {
+        headers: Object.fromEntries(req.headers.entries()),
+      });
       return Response.json({ error: "Assinatura ausente" }, { status: 401 });
     }
 
     const payload = await req.text();
+    console.log("[Pagar.me Webhook] Payload recebido:", payload);
+    console.log("[Pagar.me Webhook] Assinatura recebida:", signature);
+
     const isValid = validatePagarmeWebhook(signature, payload);
 
     if (!isValid) {
