@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Enviar email de registro
-    const registrationUrl = `${process.env.CLIENT_PORTAL_URL}/registration/${payment.id}`;
+    const registrationUrl = `${process.env.CLIENT_PORTAL_URL}/registration/${payment.hublaPaymentId}`;
 
     try {
       await sendRegistrationEmail({
