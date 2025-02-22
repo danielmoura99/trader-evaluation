@@ -60,8 +60,8 @@ export function EditPaidAccountForm({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="Profit">Profit One</SelectItem>
-                  <SelectItem value="ProfitPro">Profit Pro</SelectItem>
+                  <SelectItem value="Profit One">Profit One</SelectItem>
+                  <SelectItem value="Profit Pro">Profit Pro</SelectItem>
                 </SelectContent>
               </Select>
             </FormItem>
