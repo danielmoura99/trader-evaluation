@@ -63,7 +63,6 @@ O sistema oferece uma interface de administração completa onde gestores podem 
         <li>Lista de atividades recentes</li>
         <li>Indicadores de status com alertas</li>
       </ul>
-      <img src="https://via.placeholder.com/450x300/0A2540/FFFFFF?text=Dashboard+View" alt="Dashboard" />
     </td>
     <td width="50%">
       <h3>👥 Gestão de Clientes</h3>
@@ -73,7 +72,6 @@ O sistema oferece uma interface de administração completa onde gestores podem 
         <li>Busca e filtragem avançadas</li>
         <li>Histórico de interações</li>
       </ul>
-      <img src="https://via.placeholder.com/450x300/0A2540/FFFFFF?text=Client+Management" alt="Gestão de Clientes" />
     </td>
   </tr>
   <tr>
@@ -85,7 +83,6 @@ O sistema oferece uma interface de administração completa onde gestores podem 
         <li>Cronograma com alertas de prazos</li>
         <li>Sistema de aprovação/reprovação</li>
       </ul>
-      <img src="https://via.placeholder.com/450x300/0A2540/FFFFFF?text=Evaluation+Process" alt="Fluxo de Avaliação" />
     </td>
     <td width="50%">
       <h3>💸 Contas Remuneradas</h3>
@@ -95,7 +92,6 @@ O sistema oferece uma interface de administração completa onde gestores podem 
         <li>Ativação e cancelamento de contas</li>
         <li>Monitoramento de performance</li>
       </ul>
-      <img src="https://via.placeholder.com/450x300/0A2540/FFFFFF?text=Paid+Accounts" alt="Contas Remuneradas" />
     </td>
   </tr>
 </table>
@@ -292,14 +288,6 @@ A aplicação foi desenvolvida com design responsivo completo, funcionando perfe
 - 📱 Tablets
 - 📱 Smartphones
 
-## 🌟 Roadmap e Recursos Futuros
-
-- [ ] Integração com plataformas de trading via API
-- [ ] Sistema de notificações em tempo real
-- [ ] Dashboard para clientes acompanharem seu progresso
-- [ ] Análise avançada de métricas de trading
-- [ ] Módulo de suporte e tickets
-
 ## 🧪 Testes
 
 A aplicação inclui testes automatizados para garantir qualidade e estabilidade:
@@ -317,21 +305,4 @@ npm run test:coverage
 
 ## 👥 Autor
 
-<img src="https://github.com/danielmoura99" width="100px" style="border-radius:50%"/>
-
-**Daniel Moura**
-
-<div align="center">
-  <p>
-    <a href="https://seu-site.com" target="_blank">
-      <img src="https://img.shields.io/badge/Portfólio-3A2BE2?style=for-the-badge&logoColor=white" alt="Portfolio" />
-    </a>
-    <a href="https://linkedin.com/in/seu-perfil" target="_blank">
-      <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn" />
-    </a>
-    <a href="mailto:seu-email@example.com">
-      <img src="https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white" alt="Email" />
-    </a>
-  </p>
-  <p>⭐ Se este projeto foi útil, considere dar uma estrela no GitHub! ⭐</p>
-</div>
+Desenvolvido por **Daniel Moura.**
