@@ -1,6 +1,6 @@
 <div align="center">
   <h1>Trader Evaluation</h1>
-  <p><strong>Sistema completo de gerenciamento para mesas proprietárias de traders</strong></p>
+  <p><strong>Complete management system for proprietary trading desks</strong></p>
   
   ![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)
   ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
@@ -12,103 +12,103 @@
 
 ![Dashboard Preview](https://via.placeholder.com/1200x630/0A2540/FFFFFF?text=Trader+Evaluation+Dashboard)
 
-> **Desenvolvido com tecnologias modernas, este CRM oferece controle total sobre o ciclo de vida de traders em avaliação: da captação e acompanhamento até a gestão de traders aprovados em contas remuneradas.**
+> **Developed with modern technologies, this CRM offers complete control over the lifecycle of traders under evaluation: from acquisition and monitoring to management of approved traders in funded accounts.**
 
-## 📑 Índice
+## 📑 Table of Contents
 
-- [✨ Visão Geral](#-visão-geral)
-- [🚀 Recursos e Funcionalidades](#-recursos-e-funcionalidades)
-- [🛠️ Stack Tecnológica](#️-stack-tecnológica)
-- [🔧 Configuração e Instalação](#-configuração-e-instalação)
-- [📱 Responsividade](#-responsividade)
-- [🌟 Roadmap e Recursos Futuros](#-roadmap-e-recursos-futuros)
-- [🧪 Testes](#-testes)
-- [📚 Documentação](#-documentação)
-- [👥 Autor](#-autor)
-- [📄 Licença](#-licença)
+- [✨ Overview](#-overview)
+- [🚀 Features and Functionality](#-features-and-functionality)
+- [🛠️ Technology Stack](#️-technology-stack)
+- [🔧 Configuration and Installation](#-configuration-and-installation)
+- [📱 Responsiveness](#-responsiveness)
+- [🌟 Roadmap and Future Features](#-roadmap-and-future-features)
+- [🧪 Tests](#-tests)
+- [📚 Documentation](#-documentation)
+- [👥 Author](#-author)
+- [📄 License](#-license)
 
-## ✨ Visão Geral
+## ✨ Overview
 
-O **Trader Evaluation** é uma aplicação web completa para empresas que oferecem avaliações de traders para mesas proprietárias. O sistema gerencia todo o ciclo de vida:
+**Trader Evaluation** is a complete web application for companies that offer trader evaluations for proprietary trading desks. The system manages the entire lifecycle:
 
-1. 💰 **Processamento de pagamentos** - Integração com gateways de pagamento
-2. 📊 **Avaliação de traders** - Acompanhamento de desempenho e métricas
-3. 👨‍💼 **Gestão de contas remuneradas** - Para traders aprovados
-4. 📈 **Análise e reengajamento** - Estratégias para traders reprovados
+1. 💰 **Payment processing** - Integration with payment gateways
+2. 📊 **Trader evaluation** - Performance tracking and metrics
+3. 👨‍💼 **Funded account management** - For approved traders
+4. 📈 **Analysis and re-engagement** - Strategies for rejected traders
 
-### Fluxo de Trabalho
+### Workflow
 
 ```mermaid
 graph TD
-    A[Cliente Adquire Avaliação] -->|Webhook Pagamento| B(Registro no Sistema)
-    B --> C{Avaliação}
-    C -->|Em progresso| D[Acompanhamento]
-    D --> E{Resultado}
-    E -->|Aprovado| F[Conta Remunerada]
-    E -->|Reprovado| G[Reengajamento]
-    G -->|Nova tentativa| A
+    A[Client Purchases Evaluation] -->|Payment Webhook| B(System Registration)
+    B --> C{Evaluation}
+    C -->|In progress| D[Monitoring]
+    D --> E{Result}
+    E -->|Approved| F[Funded Account]
+    E -->|Rejected| G[Re-engagement]
+    G -->|New attempt| A
 ```
 
-O sistema oferece uma interface de administração completa onde gestores podem monitorar o progresso dos traders, gerenciar contas, visualizar métricas de desempenho e automatizar processos de comunicação.
+The system offers a complete administration interface where managers can monitor traders' progress, manage accounts, view performance metrics, and automate communication processes.
 
-## 🚀 Recursos e Funcionalidades
+## 🚀 Features and Functionality
 
 <table>
   <tr>
     <td width="50%">
-      <h3>📊 Dashboard Interativo</h3>
+      <h3>📊 Interactive Dashboard</h3>
       <ul>
-        <li>Visão consolidada das métricas principais</li>
-        <li>Gráficos de desempenho e tendências</li>
-        <li>Lista de atividades recentes</li>
-        <li>Indicadores de status com alertas</li>
+        <li>Consolidated view of key metrics</li>
+        <li>Performance and trend charts</li>
+        <li>Recent activity list</li>
+        <li>Status indicators with alerts</li>
       </ul>
     </td>
     <td width="50%">
-      <h3>👥 Gestão de Clientes</h3>
+      <h3>👥 Client Management</h3>
       <ul>
-        <li>Banco de dados completo de traders</li>
-        <li>Importação em massa via CSV</li>
-        <li>Busca e filtragem avançadas</li>
-        <li>Histórico de interações</li>
+        <li>Complete trader database</li>
+        <li>Bulk import via CSV</li>
+        <li>Advanced search and filtering</li>
+        <li>Interaction history</li>
       </ul>
     </td>
   </tr>
   <tr>
     <td width="50%">
-      <h3>🔄 Fluxo de Avaliação</h3>
+      <h3>🔄 Evaluation Flow</h3>
       <ul>
-        <li>Processo automatizado de início e fim</li>
-        <li>Integração com plataformas de trading</li>
-        <li>Cronograma com alertas de prazos</li>
-        <li>Sistema de aprovação/reprovação</li>
+        <li>Automated start and end process</li>
+        <li>Integration with trading platforms</li>
+        <li>Timeline with deadline alerts</li>
+        <li>Approval/rejection system</li>
       </ul>
     </td>
     <td width="50%">
-      <h3>💸 Contas Remuneradas</h3>
+      <h3>💸 Funded Accounts</h3>
       <ul>
-        <li>Gestão de traders aprovados</li>
-        <li>Controle de planos e plataformas</li>
-        <li>Ativação e cancelamento de contas</li>
-        <li>Monitoramento de performance</li>
+        <li>Management of approved traders</li>
+        <li>Control of plans and platforms</li>
+        <li>Account activation and cancellation</li>
+        <li>Performance monitoring</li>
       </ul>
     </td>
   </tr>
 </table>
 
-### Integrações Principais
+### Main Integrations
 
-- **Webhooks de Pagamento**: Hubla e Pagar.me
-- **Email Automatizado**: Sistema de comunicação via Nodemailer
-- **API RESTful**: Endpoints para integrações com sistemas externos
+- **Payment Webhooks**: Hubla and Pagar.me
+- **Automated Email**: Communication system via Nodemailer
+- **RESTful API**: Endpoints for integrations with external systems
 
-## 🛠️ Stack Tecnológica
+## 🛠️ Technology Stack
 
 <table>
   <tr>
-    <th>Categoria</th>
-    <th>Tecnologias</th>
-    <th>Propósito</th>
+    <th>Category</th>
+    <th>Technologies</th>
+    <th>Purpose</th>
   </tr>
   <tr>
     <td><strong>Frontend</strong></td>
@@ -118,7 +118,7 @@ O sistema oferece uma interface de administração completa onde gestores podem 
       <img src="https://img.shields.io/badge/TailwindCSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="TailwindCSS" />
       <img src="https://img.shields.io/badge/shadcn/ui-000000?style=flat-square&logo=shadcnui&logoColor=white" alt="shadcn/ui" />
     </td>
-    <td>Interface responsiva, componentizada e de alta performance com server-side rendering e otimização automática.</td>
+    <td>Responsive, componentized, and high-performance interface with server-side rendering and automatic optimization.</td>
   </tr>
   <tr>
     <td><strong>Backend</strong></td>
@@ -126,7 +126,7 @@ O sistema oferece uma interface de administração completa onde gestores podem 
       <img src="https://img.shields.io/badge/Next.js_API-000000?style=flat-square&logo=next.js&logoColor=white" alt="Next.js API" />
       <img src="https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js" />
     </td>
-    <td>API Routes do Next.js para endpoints serverless com Node.js, eliminando a necessidade de um servidor separado.</td>
+    <td>Next.js API Routes for serverless endpoints with Node.js, eliminating the need for a separate server.</td>
   </tr>
   <tr>
     <td><strong>Database</strong></td>
@@ -134,15 +134,15 @@ O sistema oferece uma interface de administração completa onde gestores podem 
       <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL" />
       <img src="https://img.shields.io/badge/Prisma-2D3748?style=flat-square&logo=prisma&logoColor=white" alt="Prisma" />
     </td>
-    <td>Database relacional robusto com ORM moderno que fornece type-safety e migrations automatizadas.</td>
+    <td>Robust relational database with a modern ORM that provides type-safety and automated migrations.</td>
   </tr>
   <tr>
-    <td><strong>Autenticação</strong></td>
+    <td><strong>Authentication</strong></td>
     <td>
       <img src="https://img.shields.io/badge/NextAuth.js-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="NextAuth.js" />
       <img src="https://img.shields.io/badge/JWT-000000?style=flat-square&logo=json-web-tokens&logoColor=white" alt="JWT" />
     </td>
-    <td>Sistema completo de autenticação com múltiplos provedores, sessões e proteção de rotas.</td>
+    <td>Complete authentication system with multiple providers, sessions, and route protection.</td>
   </tr>
   <tr>
     <td><strong>DevOps</strong></td>
@@ -150,72 +150,72 @@ O sistema oferece uma interface de administração completa onde gestores podem 
       <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker" />
       <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
     </td>
-    <td>Containerização para ambiente de desenvolvimento consistente e tipagem estática para código mais seguro.</td>
+    <td>Containerization for consistent development environment and static typing for safer code.</td>
   </tr>
   <tr>
-    <td><strong>Ferramentas</strong></td>
+    <td><strong>Tools</strong></td>
     <td>
       <img src="https://img.shields.io/badge/React_Hook_Form-EC5990?style=flat-square&logo=react-hook-form&logoColor=white" alt="React Hook Form" />
       <img src="https://img.shields.io/badge/Recharts-22B5BF?style=flat-square&logo=recharts&logoColor=white" alt="Recharts" />
       <img src="https://img.shields.io/badge/Zod-3E67B1?style=flat-square&logo=zod&logoColor=white" alt="Zod" />
     </td>
-    <td>Bibliotecas especializadas para manipulação de formulários, visualização de dados e validação.</td>
+    <td>Specialized libraries for form handling, data visualization, and validation.</td>
   </tr>
 </table>
 
-### 🏗️ Arquitetura
+### 🏗️ Architecture
 
-A aplicação segue uma arquitetura moderna baseada no App Router do Next.js:
+The application follows a modern architecture based on Next.js App Router:
 
 ```
 trader-evaluation/
-├── app/                  # Rotas e páginas da aplicação
-│   ├── (auth)/           # Sistema de autenticação
-│   ├── (dashboard)/      # Painel administrativo
-│   ├── api/              # API endpoints e webhooks
-├── components/           # Componentes React reutilizáveis
-├── lib/                  # Serviços e utilitários core
-├── prisma/               # Schema e migrations do banco
-├── public/               # Arquivos estáticos
-├── utils/                # Funções utilitárias
+├── app/                  # Application routes and pages
+│   ├── (auth)/           # Authentication system
+│   ├── (dashboard)/      # Administrative panel
+│   ├── api/              # API endpoints and webhooks
+├── components/           # Reusable React components
+├── lib/                  # Core services and utilities
+├── prisma/               # Database schema and migrations
+├── public/               # Static files
+├── utils/                # Utility functions
 ├── hooks/                # Custom React hooks
 ```
 
-Este projeto implementa:
+This project implements:
 
-- **Clean Architecture** - Separação clara de responsabilidades
-- **DRY Principle** - Componentes reutilizáveis e abstrações
-- **Type Safety** - TypeScript em todas as camadas da aplicação
-- **Middleware Pattern** - Para autenticação e proteção de rotas
+- **Clean Architecture** - Clear separation of responsibilities
+- **DRY Principle** - Reusable components and abstractions
+- **Type Safety** - TypeScript in all layers of the application
+- **Middleware Pattern** - For authentication and route protection
 
-## 🔧 Configuração e Instalação
+## 🔧 Configuration and Installation
 
-### Pré-requisitos
+### Prerequisites
 
-- Node.js 18.x ou superior
-- PostgreSQL 14.x ou superior
-- Docker e Docker Compose (opcional)
+- Node.js 18.x or higher
+- PostgreSQL 14.x or higher
+- Docker and Docker Compose (optional)
 
-### Instalação
+### Installation
 
-1. **Clone o repositório**
+1. **Clone the repository**
 
 ```bash
-git clone https://github.com/seu-usuario/trader-evaluation.git
+git clone https://github.com/your-username/trader-evaluation.git
 cd trader-evaluation
 ```
 
-2. **Instale as dependências**
+2. **Install dependencies**
 
 ```bash
 npm install
-# ou
+# or
 yarn
 ```
 
-3. **Configure as variáveis de ambiente**
+3. **Configure environment variables**
 
-Crie um arquivo `.env` na raiz do projeto:
+Create a `.env` file in the project root:
 
 ```env
 # Database
@@ -223,86 +223,84 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5432/trader_evaluation"
 
 # NextAuth
 NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="chave-secreta-para-nextauth"
+NEXTAUTH_SECRET="secret-key-for-nextauth"
 
-# Email (para notificações)
+# Email (for notifications)
 SMTP_HOST="smtp.example.com"
 SMTP_PORT="587"
-SMTP_USER="seu-usuario@example.com"
-SMTP_PASS="sua-senha"
+SMTP_USER="your-user@example.com"
+SMTP_PASS="your-password"
 SMTP_SECURE="false"
 EMAIL_FROM="email <noreply@example.com>"
 
-# Integrações de Pagamento
-HUBLA_WEBHOOK_SECRET="chave-secreta-hubla"
-PAGARME_WEBHOOK_SECRET="chave-secreta-pagarme"
-API_KEY="chave-api-para-integrações"
-
-
+# Payment Integrations
+HUBLA_WEBHOOK_SECRET="hubla-secret-key"
+PAGARME_WEBHOOK_SECRET="pagarme-secret-key"
+API_KEY="api-key-for-integrations"
 ```
 
-4. **Inicie o banco de dados com Docker (opcional)**
+4. **Start the database with Docker (optional)**
 
 ```bash
 docker-compose up -d
 ```
 
-5. **Execute as migrações do Prisma**
+5. **Run Prisma migrations**
 
 ```bash
 npx prisma migrate dev
 ```
 
-6. **Inicie o servidor de desenvolvimento**
+6. **Start the development server**
 
 ```bash
 npm run dev
-# ou
+# or
 yarn dev
 ```
 
-7. **Crie um usuário administrador**
+7. **Create an admin user**
 
 ```bash
 npm run create-admin
-# ou
+# or
 yarn create-admin
 ```
 
-### Estrutura do Banco de Dados
+### Database Structure
 
-O sistema utiliza as seguintes tabelas principais:
+The system uses the following main tables:
 
-- `clients` - Informações dos traders em avaliação
-- `users` - Usuários administradores do sistema
-- `contacts` - Registros de contato com clientes
-- `payments` - Transações de pagamento recebidas
-- `paid_accounts` - Contas remuneradas para traders aprovados
+- `clients` - Information about traders under evaluation
+- `users` - System administrator users
+- `contacts` - Records of contact with clients
+- `payments` - Payment transactions received
+- `paid_accounts` - Funded accounts for approved traders
 
-## 📱 Responsividade
+## 📱 Responsiveness
 
-A aplicação foi desenvolvida com design responsivo completo, funcionando perfeitamente em:
+The application was developed with complete responsive design, working perfectly on:
 
 - 💻 Desktops
 - 💻 Laptops
 - 📱 Tablets
 - 📱 Smartphones
 
-## 🧪 Testes
+## 🧪 Tests
 
-A aplicação inclui testes automatizados para garantir qualidade e estabilidade:
+The application includes automated tests to ensure quality and stability:
 
 ```bash
-# Executa os testes unitários
+# Run unit tests
 npm run test
 
-# Executa os testes de integração
+# Run integration tests
 npm run test:integration
 
-# Verifica a cobertura de testes
+# Check test coverage
 npm run test:coverage
 ```
 
-## 👥 Autor
+## 👥 Author
 
-Desenvolvido por **Daniel Moura.**
+Developed by **Daniel Moura.**
