@@ -29,7 +29,14 @@ export async function processEvaluation({
     console.log("[Evaluation Service] Processando avaliação simples");
 
     // Gera URL para cadastro
-    const registrationUrl = `${process.env.CLIENT_PORTAL_URL}/registration/${hublaPaymentId}`;
+    const orderBumps = paymentData.metadata.orderBumps;
+    let registrationUrl = `${process.env.CLIENT_PORTAL_URL}/registration/${hublaPaymentId}`;
+
+    // Se existem order bumps, adiciona os courseIds na URL
+    if (orderBumps && orderBumps.courseIds && orderBumps.courseIds.length > 0) {
+      const additionalCourseIds = orderBumps.courseIds.join(",");
+      registrationUrl += `?orderBumpCourseIds=${additionalCourseIds}`;
+    }
 
     // Envia email de registro
     const emailResult = await sendEvaluationEmail({

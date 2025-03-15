@@ -54,6 +54,12 @@ export async function POST(req: NextRequest) {
     // Determinar o tipo de produto e processar conforme o cenário apropriado
     const productType = paymentData.metadata.productType?.toLowerCase();
 
+    console.log("[Pagar.me Webhook] Metadata recebido:", {
+      productType: paymentData.metadata.productType,
+      courseId: paymentData.metadata.courseId,
+      course_id: paymentData.metadata.course_id,
+    });
+
     let processResult;
 
     if (productType === "combo") {

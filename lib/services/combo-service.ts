@@ -30,11 +30,13 @@ export async function processCombo({
 
     // Extrai informações do curso/produto educacional
     const courseId = paymentData.metadata.courseId || "";
+    console.log("[Combo Service] courseId extraído:", courseId);
     const courseName =
       paymentData.metadata.productName || "Produto Educacional";
 
     // Verifica order bumps (produtos adicionais)
     const orderBumps = paymentData.metadata.orderBumps;
+    console.log("[Combo Service] orderBumps:", orderBumps);
     const additionalCourseIds = orderBumps?.courseIds || [];
     const additionalCourseNames = orderBumps?.names || [];
 
@@ -48,7 +50,24 @@ export async function processCombo({
     };
 
     // Gera URL para cadastro
-    const registrationUrl = `${process.env.CLIENT_PORTAL_URL}/registration/${hublaPaymentId}?combo=true`;
+    let registrationUrl = `${process.env.CLIENT_PORTAL_URL}/registration/${hublaPaymentId}?combo=true`;
+
+    // Adiciona o courseId principal se existir
+    if (courseId && courseId.trim() !== "") {
+      registrationUrl += `&courseId=${courseId}`;
+      console.log("[Combo Service] Adicionando courseId à URL:", courseId);
+    } else {
+      console.log("[Combo Service] courseId não encontrado ou vazio");
+    }
+
+    // Adiciona courseIds adicionais dos order bumps
+    if (additionalCourseIds.length > 0) {
+      registrationUrl += `&additionalCourseIds=${additionalCourseIds.join(",")}`;
+      console.log(
+        "[Combo Service] Adicionando additionalCourseIds à URL:",
+        additionalCourseIds
+      );
+    }
 
     // Envia email de registro
     const emailResult = await sendComboEmail({

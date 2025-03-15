@@ -46,6 +46,10 @@ export class PagarmeWebhookService {
         }
       }
 
+      // Capturar courseId de qualquer um dos campos possíveis
+      const courseId = charge.metadata.course_id || charge.metadata.courseId;
+      console.log("[Pagarme Webhook Service] courseId encontrado:", courseId);
+
       const splitInfo = charge.last_transaction.split
         ? {
             affiliateId: charge.metadata.affiliate_id || undefined, // Convertemos null para undefined
@@ -69,8 +73,7 @@ export class PagarmeWebhookService {
         paymentMethod: charge.payment_method,
         metadata: {
           ...charge.metadata,
-          productType:
-            charge.metadata.product_type || charge.metadata.productType,
+          productType: charge.metadata.productType,
           courseId: charge.metadata.course_id || charge.metadata.courseId,
           hasOrderBumps: charge.metadata.has_order_bumps === true,
           orderBumps, // Objeto parseado
