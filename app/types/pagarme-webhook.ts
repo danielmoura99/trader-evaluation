@@ -50,9 +50,16 @@ export interface PagarmeWebhookPayload {
       };
       metadata: {
         product_id: string;
-        affiliate_id: string | null;
+        affiliate_id?: string | null;
         product_name: string;
         product_description?: string;
+        product_type: string;
+        order_bumps: string;
+        courseIds: string;
+        has_order_bumps: boolean | null;
+        course_id: string;
+        productType: string;
+        courseId: string;
       };
     }>;
   };
@@ -71,9 +78,30 @@ export interface PagarmePaymentData {
   saleDate: Date;
   paymentMethod: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  metadata: Record<string, any>;
+  metadata: {
+    productId: string;
+    productType: string; // "evaluation", "combo", ou "educational"
+    productName: string;
+    productDescription?: string;
+    courseId?: string;
+    hasOrderBumps?: boolean | null;
+    orderBumps?: {
+      ids: string[];
+      names: string[];
+      courseIds: string[];
+    };
+    affiliate_id?: string | null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any; // Para outros campos que possam existir
+  };
   splitInfo?: {
     affiliateId: string | undefined;
     splitAmount?: number;
   };
+}
+
+export interface OrderBump {
+  id: string;
+  name: string;
+  courseId: string;
 }
