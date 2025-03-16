@@ -1,10 +1,9 @@
-// app/api/webhook/pagarme/route.ts
+// app/api/webhooks/pagarme/route.ts
 import { NextRequest } from "next/server";
 import { PagarmeWebhookService } from "@/lib/services/pagarme-webhook";
+import { sendRegistrationEmail } from "@/lib/email-service";
 import { prisma } from "@/lib/prisma";
-import { processEvaluation } from "@/lib/services/evaluation-service";
-import { processCombo } from "@/lib/services/combo-service";
-import { processEducational } from "@/lib/services/educational-service";
+//import { validatePagarmeWebhook } from "@/lib/services/webhook-validator";
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,7 +19,6 @@ export async function POST(req: NextRequest) {
       return Response.json({ message: "Evento ignorado" });
     }
 
-    // Extrair dados do webhook
     const webhookService = new PagarmeWebhookService();
     const paymentData = webhookService.extractPaymentData(webhookData);
 
@@ -32,10 +30,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Registrar o pagamento no banco de dados
+    // Criar o pagamento usando a estrutura existente
     const payment = await prisma.payment.create({
       data: {
-        hublaPaymentId: paymentData.orderId, // Usamos orderId no campo hublaPaymentId
+        hublaPaymentId: paymentData.orderId, // Usando o campo existente
         platform: paymentData.platform,
         plan: paymentData.plan,
         amount: paymentData.amount,
@@ -49,46 +47,24 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    console.log("[Pagar.me Webhook] Pagamento registrado:", payment.id);
+    // Enviar email de registro
+    const registrationUrl = `${process.env.CLIENT_PORTAL_URL}/registration/${payment.hublaPaymentId}`;
 
-    // Determinar o tipo de produto e processar conforme o cenário apropriado
-    const productType = paymentData.metadata.productType?.toLowerCase();
-
-    console.log("[Pagar.me Webhook] Metadata recebido:", {
-      productType: paymentData.metadata.productType,
-      courseId: paymentData.metadata.courseId,
-      course_id: paymentData.metadata.course_id,
-    });
-
-    let processResult;
-
-    if (productType === "combo") {
-      console.log(
-        "[Pagar.me Webhook] Processando como COMBO (avaliação + educacional)"
-      );
-      processResult = await processCombo({
-        paymentData,
-        hublaPaymentId: payment.hublaPaymentId,
+    try {
+      await sendRegistrationEmail({
+        customerName: paymentData.customerName,
+        customerEmail: paymentData.customerEmail,
+        registrationUrl,
       });
-    } else if (productType === "educational") {
-      console.log("[Pagar.me Webhook] Processando como EDUCACIONAL");
-      processResult = await processEducational({
-        paymentData,
-        hublaPaymentId: payment.hublaPaymentId,
-      });
-    } else {
-      // Default: processar como avaliação normal
-      console.log("[Pagar.me Webhook] Processando como AVALIAÇÃO");
-      processResult = await processEvaluation({
-        paymentData,
-        hublaPaymentId: payment.hublaPaymentId,
-      });
+      console.log("[Pagar.me Webhook] Email de registro enviado com sucesso");
+    } catch (emailError) {
+      console.error("[Pagar.me Webhook] Erro ao enviar email:", emailError);
     }
 
     console.log("[Pagar.me Webhook] Processamento concluído:", {
-      type: processResult.type,
-      success: processResult.success,
-      emailSent: processResult.emailSent,
+      paymentId: payment.id,
+      orderId: paymentData.orderId,
+      status: payment.status,
     });
 
     console.log("=== FIM DO PROCESSAMENTO DO WEBHOOK PAGAR.ME ===\n");
@@ -96,8 +72,7 @@ export async function POST(req: NextRequest) {
     return Response.json({
       success: true,
       paymentId: payment.id,
-      orderId: paymentData.orderId,
-      processResult,
+      registrationUrl,
     });
   } catch (error) {
     console.error("[Pagar.me Webhook] Erro crítico:", error);

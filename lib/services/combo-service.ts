@@ -131,7 +131,7 @@ async function sendComboEmail({
       from:
         process.env.EMAIL_FROM || '"Traders House" <noreply@tradershouse.com>',
       to: customerEmail,
-      subject: "Complete seu Cadastro - Avaliação + Curso - Traders House",
+      subject: "Complete seu Cadastro - Traders House",
       html: `
         <div style="max-width: 600px; margin: 0 auto; background-color: #121212; color: #ffffff; font-family: Arial, sans-serif;">
           <!-- Conteúdo Principal -->
@@ -145,7 +145,7 @@ async function sendComboEmail({
             </p>
             
             <p style="color: #ffffff; font-size: 14px; margin-bottom: 15px;">
-              Seu pagamento foi confirmado com sucesso. Você adquiriu nossa avaliação de trader juntamente com acesso aos seguintes conteúdos educacionais:
+              Seu pagamento foi confirmado com sucesso. Você adquiriu uma avaliação juntamente com acesso aos seguintes conteúdos educacionais:
             </p>
             
             <ul style="color: #ffffff; font-size: 14px; margin-bottom: 20px; padding-left: 20px;">
