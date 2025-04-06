@@ -57,23 +57,61 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Criar nova avaliação
-    const evaluation = await prisma.client.create({
-      data: {
-        name: data.name,
-        email: data.email,
-        cpf: data.cpf,
-        phone: data.phone,
-        birthDate: new Date(data.birthDate),
-        address: data.address,
-        zipCode: data.zipCode,
-        platform: data.platform,
-        plan: data.plan,
-        traderStatus: "Aguardando Inicio",
-        startDate: new Date(data.startDate),
-        observation: data.observation, // Adicionar campo
-      },
-    });
+    // Verificar se o plano é MGT
+    const isMGTPlan = data.plan?.includes("MGT");
+    console.log(
+      `[Process Registration] É plano MGT? ${isMGTPlan ? "Sim" : "Não"}`
+    );
+
+    let clientId;
+
+    if (isMGTPlan) {
+      // Criar novo cliente MGC
+      const mgcClient = await prisma.mgcClient.create({
+        data: {
+          name: data.name,
+          email: data.email,
+          cpf: data.cpf,
+          phone: data.phone,
+          birthDate: new Date(data.birthDate),
+          address: data.address,
+          zipCode: data.zipCode,
+          platform: data.platform,
+          plan: data.plan,
+          status: "Aguardando", // Status para MGC clients
+          startDate: new Date(data.startDate),
+          observation: data.observation,
+        },
+      });
+      clientId = mgcClient.id;
+      console.log(
+        "[Process Registration] Cliente MGC criado com ID:",
+        clientId
+      );
+    } else {
+      // Criar nova avaliação normal
+      const evaluation = await prisma.client.create({
+        data: {
+          name: data.name,
+          email: data.email,
+          cpf: data.cpf,
+          phone: data.phone,
+          birthDate: new Date(data.birthDate),
+          address: data.address,
+          zipCode: data.zipCode,
+          platform: data.platform,
+          plan: data.plan,
+          traderStatus: "Aguardando Inicio",
+          startDate: new Date(data.startDate),
+          observation: data.observation,
+        },
+      });
+      clientId = evaluation.id;
+      console.log(
+        "[Process Registration] Cliente regular criado com ID:",
+        clientId
+      );
+    }
 
     // Atualizar status do pagamento
     await prisma.payment.update({
@@ -86,7 +124,8 @@ export async function POST(req: NextRequest) {
 
     return Response.json({
       message: "Registro processado com sucesso",
-      evaluationId: evaluation.id,
+      clientId: clientId,
+      clientType: isMGTPlan ? "mgc" : "regular",
     });
   } catch (error) {
     console.error("[Process Registration] Erro crítico:", error);
