@@ -145,7 +145,7 @@ async function sendComboEmail({
             </p>
             
             <p style="color: #ffffff; font-size: 14px; margin-bottom: 15px;">
-              Seu pagamento foi confirmado com sucesso. Você adquiriu uma avaliação juntamente com acesso aos seguintes conteúdos educacionais:
+              Seu pagamento foi confirmado com sucesso. Você adquiriu nosso produto com acesso aos seguintes conteúdos educacionais:
             </p>
             
             <ul style="color: #ffffff; font-size: 14px; margin-bottom: 20px; padding-left: 20px;">
@@ -153,7 +153,7 @@ async function sendComboEmail({
             </ul>
             
             <p style="color: #ffffff; font-size: 14px; margin-bottom: 20px;">
-              Para iniciar sua jornada na mesa proprietária da Traders House e ter acesso aos cursos, clique no botão abaixo para completar seu cadastro.
+              Para iniciar sua jornada na Traders House e ter acesso aos produtos, clique no botão abaixo para completar seu cadastro.
             </p>
             
             <!-- Botão -->

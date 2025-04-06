@@ -88,3 +88,25 @@ model PaidAccount {
 
   @@map("paid_accounts")
 }
+
+model MgcClient {
+  id              String    @id @default(cuid())
+  name            String
+  cpf             String    
+  phone           String
+  email           String
+  birthDate       DateTime
+  address         String?
+  zipCode         String?
+  platform        String
+  plan            String
+  status          String    // "Aguardando", "Ativo", "Cancelado"
+  startDate       DateTime?
+  endDate         DateTime?
+  cancellationDate DateTime?
+  observation     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("mgc_clients")
+}

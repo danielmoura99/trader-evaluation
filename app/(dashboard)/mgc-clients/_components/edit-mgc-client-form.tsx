@@ -1,4 +1,3 @@
-// _components/edit-paid-account-form.tsx
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,30 +16,33 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
-const editPaidAccountSchema = z.object({
+const editMgcClientSchema = z.object({
   platform: z.string().min(1, "Plataforma é obrigatória"),
   plan: z.string().min(1, "Plano é obrigatório"),
+  observation: z.string().optional(),
 });
 
-type EditPaidAccountForm = z.infer<typeof editPaidAccountSchema>;
+type EditMgcClientForm = z.infer<typeof editMgcClientSchema>;
 
-interface EditPaidAccountFormProps {
+interface EditMgcClientFormProps {
   initialData: {
     platform: string;
     plan: string;
+    observation?: string;
   };
-  onSubmit: (data: EditPaidAccountForm) => void;
+  onSubmit: (data: EditMgcClientForm) => void;
   onCancel: () => void;
 }
 
-export function EditPaidAccountForm({
+export function EditMgcClientForm({
   initialData,
   onSubmit,
   onCancel,
-}: EditPaidAccountFormProps) {
-  const form = useForm<EditPaidAccountForm>({
-    resolver: zodResolver(editPaidAccountSchema),
+}: EditMgcClientFormProps) {
+  const form = useForm<EditMgcClientForm>({
+    resolver: zodResolver(editMgcClientSchema),
     defaultValues: initialData,
   });
 
@@ -91,6 +93,23 @@ export function EditPaidAccountForm({
                   </SelectItem>
                 </SelectContent>
               </Select>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="observation"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Observação</FormLabel>
+              <FormControl>
+                <Textarea
+                  {...field}
+                  value={field.value || ""}
+                  placeholder="Observações adicionais sobre o cliente"
+                />
+              </FormControl>
             </FormItem>
           )}
         />

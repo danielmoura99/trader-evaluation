@@ -56,6 +56,10 @@ const data = {
           title: "Traders",
           url: "/paid-accounts",
         },
+        {
+          title: "Clientes MGT",
+          url: "/mgc-clients",
+        },
       ],
     },
     {
