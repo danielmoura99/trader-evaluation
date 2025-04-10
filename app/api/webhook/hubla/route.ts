@@ -99,10 +99,29 @@ export async function POST(req: NextRequest) {
 
     // Processa o pagamento
     const payment = await hublaService.processPayment(paymentData);
-    const registrationUrl = `${
-      process.env.CLIENT_PORTAL_URL || "https://portal.tradershouse.com.br"
-    }/registration/${payment.hublaPaymentId}`;
 
+    const isMGTPlan = paymentData.plan.includes("MGT");
+    console.log(`[Hubla Webhook] É cliente MGT? ${isMGTPlan ? "Sim" : "Não"}`);
+
+    // URL de registro diferente baseada no tipo de cliente
+    let registrationUrl;
+
+    if (isMGTPlan) {
+      // URL para clientes MGT com flag específica
+      registrationUrl = `${
+        process.env.CLIENT_PORTAL_URL || "https://portal.tradershouse.com.br"
+      }/registration/${payment.hublaPaymentId}?isMGT=true`;
+
+      console.log(
+        "[Hubla Webhook] Gerando URL para cliente MGT:",
+        registrationUrl
+      );
+    } else {
+      // URL padrão para clientes regulares
+      registrationUrl = `${
+        process.env.CLIENT_PORTAL_URL || "https://portal.tradershouse.com.br"
+      }/registration/${payment.hublaPaymentId}`;
+    }
     // Adicionar envio de email
     try {
       await sendRegistrationEmail({
@@ -127,6 +146,7 @@ export async function POST(req: NextRequest) {
       platform: payment.platform,
       plan: payment.plan,
       registrationUrl,
+      isMGTPlan,
     });
 
     console.log("=== FIM DO PROCESSAMENTO DO WEBHOOK ===\n");
@@ -136,6 +156,7 @@ export async function POST(req: NextRequest) {
       paymentId: payment.hublaPaymentId,
       registrationUrl,
       sandbox: isSandbox,
+      isMGTPlan,
     });
   } catch (error) {
     console.error("[Hubla Webhook] Erro crítico ao processar webhook:", error);
