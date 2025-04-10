@@ -43,10 +43,10 @@ export async function sendRegistrationEmail({
             </p>
             
             <p style="color: #ffffff; font-size: 14px; margin-bottom: 25px;">
-              Seu pagamento foi confirmado com sucesso. Agora você está a um passo de começar sua jornada na mesa propietária da traders house. Clique no botão abaixo para completar seu cadastro e iniciar sua avaliação.
+              Seu pagamento foi confirmado com sucesso. Agora você está a um passo de começar sua jornada na Traders House. Clique no botão abaixo para completar seu cadastro.
             </p>
             
-            <!-- Botão -->
+            <!-- Botão --> 
             <div style="text-align: center; margin: 30px 0;">
               <a href="${registrationUrl}" 
                  style="background-color: #2fd82f;
