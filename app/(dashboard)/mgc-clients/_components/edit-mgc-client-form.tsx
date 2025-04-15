@@ -17,11 +17,13 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 const editMgcClientSchema = z.object({
   platform: z.string().min(1, "Plataforma é obrigatória"),
   plan: z.string().min(1, "Plano é obrigatório"),
   observation: z.string().optional(),
+  startDate: z.date().nullable().optional(),
 });
 
 type EditMgcClientForm = z.infer<typeof editMgcClientSchema>;
@@ -31,6 +33,7 @@ interface EditMgcClientFormProps {
     platform: string;
     plan: string;
     observation?: string;
+    startDate?: Date | null;
   };
   onSubmit: (data: EditMgcClientForm) => void;
   onCancel: () => void;
@@ -43,7 +46,11 @@ export function EditMgcClientForm({
 }: EditMgcClientFormProps) {
   const form = useForm<EditMgcClientForm>({
     resolver: zodResolver(editMgcClientSchema),
-    defaultValues: initialData,
+    defaultValues: {
+      ...initialData,
+      // startDate já deve ser um objeto Date correto passado pelo componente pai
+      startDate: initialData.startDate,
+    },
   });
 
   return (
@@ -93,6 +100,40 @@ export function EditMgcClientForm({
                   </SelectItem>
                 </SelectContent>
               </Select>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="startDate"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Data de Ativação</FormLabel>
+              <FormControl>
+                <Input
+                  type="date"
+                  value={
+                    field.value instanceof Date && !isNaN(field.value.getTime())
+                      ? field.value.toISOString().split("T")[0]
+                      : ""
+                  }
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      // Criar a data a partir da string (formato YYYY-MM-DD)
+                      const dateStr = e.target.value;
+                      const [year, month, day] = dateStr.split("-").map(Number);
+
+                      // Criar uma data usando o fuso horário local (sem o problema de UTC)
+                      const localDate = new Date(year, month - 1, day);
+
+                      field.onChange(localDate);
+                    } else {
+                      field.onChange(null);
+                    }
+                  }}
+                />
+              </FormControl>
             </FormItem>
           )}
         />

@@ -57,7 +57,8 @@ function MgcClientsContent() {
   const handleEditSubmit = async (data: {
     platform: string;
     plan: string;
-    observation?: string; // Tornando opcional aqui
+    observation?: string;
+    startDate?: Date | null;
   }) => {
     try {
       if (editingClient) {
@@ -98,6 +99,9 @@ function MgcClientsContent() {
                 platform: editingClient.platform,
                 plan: editingClient.plan,
                 observation: editingClient.observation || "",
+                startDate: editingClient.startDate
+                  ? new Date(editingClient.startDate)
+                  : null,
               }}
               onSubmit={handleEditSubmit}
               onCancel={() => setEditModalOpen(false)}
