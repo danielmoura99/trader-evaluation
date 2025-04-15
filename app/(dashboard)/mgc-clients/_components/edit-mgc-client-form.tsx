@@ -24,6 +24,8 @@ const editMgcClientSchema = z.object({
   plan: z.string().min(1, "Plano é obrigatório"),
   observation: z.string().optional(),
   startDate: z.date().nullable().optional(),
+  endDate: z.date().nullable().optional(),
+  status: z.enum(["Aguardando", "Ativo", "Cancelado"]),
 });
 
 type EditMgcClientForm = z.infer<typeof editMgcClientSchema>;
@@ -34,6 +36,8 @@ interface EditMgcClientFormProps {
     plan: string;
     observation?: string;
     startDate?: Date | null;
+    endDate?: Date | null;
+    status: string;
   };
   onSubmit: (data: EditMgcClientForm) => void;
   onCancel: () => void;
@@ -48,8 +52,10 @@ export function EditMgcClientForm({
     resolver: zodResolver(editMgcClientSchema),
     defaultValues: {
       ...initialData,
-      // startDate já deve ser um objeto Date correto passado pelo componente pai
+      // startDate e endDate já devem ser objetos Date corretos passados pelo componente pai
       startDate: initialData.startDate,
+      endDate: initialData.endDate,
+      status: initialData.status as "Aguardando" | "Ativo" | "Cancelado",
     },
   });
 
@@ -106,10 +112,66 @@ export function EditMgcClientForm({
 
         <FormField
           control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="Aguardando">Aguardando</SelectItem>
+                  <SelectItem value="Ativo">Ativo</SelectItem>
+                  <SelectItem value="Cancelado">Cancelado</SelectItem>
+                </SelectContent>
+              </Select>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="startDate"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Data de Ativação</FormLabel>
+              <FormControl>
+                <Input
+                  type="date"
+                  value={
+                    field.value instanceof Date && !isNaN(field.value.getTime())
+                      ? field.value.toISOString().split("T")[0]
+                      : ""
+                  }
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      // Criar a data a partir da string (formato YYYY-MM-DD)
+                      const dateStr = e.target.value;
+                      const [year, month, day] = dateStr.split("-").map(Number);
+
+                      // Criar uma data usando o fuso horário local (sem o problema de UTC)
+                      const localDate = new Date(year, month - 1, day);
+
+                      field.onChange(localDate);
+                    } else {
+                      field.onChange(null);
+                    }
+                  }}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="endDate"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Data de Cancelamento</FormLabel>
               <FormControl>
                 <Input
                   type="date"

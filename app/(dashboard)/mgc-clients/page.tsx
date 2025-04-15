@@ -59,6 +59,8 @@ function MgcClientsContent() {
     plan: string;
     observation?: string;
     startDate?: Date | null;
+    endDate?: Date | null;
+    status: string;
   }) => {
     try {
       if (editingClient) {
@@ -102,6 +104,10 @@ function MgcClientsContent() {
                 startDate: editingClient.startDate
                   ? new Date(editingClient.startDate)
                   : null,
+                endDate: editingClient.endDate
+                  ? new Date(editingClient.endDate)
+                  : null,
+                status: editingClient.status || "Aguardando",
               }}
               onSubmit={handleEditSubmit}
               onCancel={() => setEditModalOpen(false)}

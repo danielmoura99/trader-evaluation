@@ -7,6 +7,14 @@ import { Play, Square, Edit } from "lucide-react";
 import { getSubscriptionPlanId } from "@/utils/plataform-helper";
 import { BROKER_CONFIG } from "@/utils/broker-config";
 import { activateMgcClient, cancelMgcClient } from "../_actions";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { CancelMgcForm } from "./cancel-mgc-form";
 
 interface MgcClientButtonsProps {
   client: {
@@ -22,6 +30,7 @@ interface MgcClientButtonsProps {
 
 export function MgcClientButtons({ client }: MgcClientButtonsProps) {
   const { toast } = useToast();
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   const handleCreateAccount = async () => {
     try {
@@ -63,10 +72,11 @@ export function MgcClientButtons({ client }: MgcClientButtonsProps) {
     }
   };
 
-  const handleCancelAccount = async () => {
-    if (!confirm("Tem certeza que deseja cancelar esta conta?")) return;
-
+  const handleCancelAccount = async (data: {
+    reason: "Cancelado" | "Reprovado";
+  }) => {
     try {
+      // Chamada da API para cancelar a plataforma
       const payload = {
         document: client.cpf.replace(/\D/g, ""),
         subscriptionPlanId: getSubscriptionPlanId(client.platform),
@@ -77,11 +87,18 @@ export function MgcClientButtons({ client }: MgcClientButtonsProps) {
       const response = await axios.post("/api/broker/cancel-account", payload);
 
       if (response.data.success) {
-        await cancelMgcClient(client.id);
+        // Cancelamento na plataforma foi bem-sucedido, agora atualizar o banco de dados
+        await cancelMgcClient(client.id, data.reason);
+
+        setCancelDialogOpen(false);
+
         toast({
           title: "Sucesso",
-          description: "Conta cancelada com sucesso",
+          description: `Conta ${data.reason.toLowerCase()} com sucesso`,
         });
+
+        // Recarregar a página para atualizar a lista
+        window.location.reload();
       }
     } catch (error) {
       console.error("Erro no cancelamento:", error);
@@ -94,40 +111,58 @@ export function MgcClientButtons({ client }: MgcClientButtonsProps) {
   };
 
   return (
-    <div className="flex gap-2">
-      {client.status === "Aguardando" && (
+    <>
+      <div className="flex gap-2">
+        {client.status === "Aguardando" && (
+          <Button
+            onClick={handleCreateAccount}
+            variant="outline"
+            size="sm"
+            className="bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20"
+          >
+            <Play className="h-4 w-4 mr-2" />
+            Liberar Plataforma
+          </Button>
+        )}
+
+        {client.status === "Ativo" && (
+          <Button
+            onClick={() => setCancelDialogOpen(true)}
+            variant="outline"
+            size="sm"
+            className="bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20"
+          >
+            <Square className="h-4 w-4 mr-2" />
+            Cancelar Plataforma
+          </Button>
+        )}
+
         <Button
-          onClick={handleCreateAccount}
+          onClick={() => window.editMgcClient(client)}
           variant="outline"
           size="sm"
-          className="bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20"
+          className="bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20"
         >
-          <Play className="h-4 w-4 mr-2" />
-          Liberar Plataforma
+          <Edit className="h-4 w-4 mr-2" />
+          Editar
         </Button>
-      )}
+      </div>
 
-      {client.status === "Ativo" && (
-        <Button
-          onClick={handleCancelAccount}
-          variant="outline"
-          size="sm"
-          className="bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20"
-        >
-          <Square className="h-4 w-4 mr-2" />
-          Cancelar Conta
-        </Button>
-      )}
-
-      <Button
-        onClick={() => window.editMgcClient(client)}
-        variant="outline"
-        size="sm"
-        className="bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20"
-      >
-        <Edit className="h-4 w-4 mr-2" />
-        Editar
-      </Button>
-    </div>
+      {/* Dialog para confirmação de cancelamento */}
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent className="bg-zinc-900 border-zinc-800">
+          <DialogHeader>
+            <DialogTitle className="text-zinc-100">
+              Cancelar Plataforma
+            </DialogTitle>
+          </DialogHeader>
+          <CancelMgcForm
+            client={client}
+            onSubmit={handleCancelAccount}
+            onCancel={() => setCancelDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
