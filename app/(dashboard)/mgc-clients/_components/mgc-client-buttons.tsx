@@ -3,10 +3,14 @@
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
-import { Play, Square, Edit } from "lucide-react";
+import { Play, Square, Edit, Trash2 } from "lucide-react";
 import { getSubscriptionPlanId } from "@/utils/plataform-helper";
 import { BROKER_CONFIG } from "@/utils/broker-config";
-import { activateMgcClient, cancelMgcClient } from "../_actions";
+import {
+  activateMgcClient,
+  cancelMgcClient,
+  deleteMgcClient,
+} from "../_actions";
 import { useState } from "react";
 import {
   Dialog,
@@ -110,6 +114,34 @@ export function MgcClientButtons({ client }: MgcClientButtonsProps) {
     }
   };
 
+  const handleDeleteClient = async () => {
+    // Confirmação antes de excluir
+    if (
+      !confirm(
+        `Tem certeza que deseja excluir o cliente ${client.name}? Esta ação não pode ser desfeita.`
+      )
+    )
+      return;
+
+    try {
+      await deleteMgcClient(client.id);
+      toast({
+        title: "Cliente excluído",
+        description: "O cliente foi removido com sucesso.",
+      });
+
+      // Recarregar a página para atualizar a tabela
+      window.location.reload();
+    } catch (error) {
+      console.error("Erro ao excluir cliente:", error);
+      toast({
+        title: "Erro",
+        description: "Falha ao excluir o cliente",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <div className="flex gap-2">
@@ -145,6 +177,16 @@ export function MgcClientButtons({ client }: MgcClientButtonsProps) {
         >
           <Edit className="h-4 w-4 mr-2" />
           Editar
+        </Button>
+
+        <Button
+          onClick={handleDeleteClient}
+          variant="outline"
+          size="sm"
+          className="bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Excluir
         </Button>
       </div>
 

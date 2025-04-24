@@ -163,3 +163,10 @@ export async function updateMgcClient(
   });
   revalidatePath("/mgc-clients");
 }
+
+export async function deleteMgcClient(id: string) {
+  await prisma.mgcClient.delete({
+    where: { id },
+  });
+  revalidatePath("/mgc-clients");
+}

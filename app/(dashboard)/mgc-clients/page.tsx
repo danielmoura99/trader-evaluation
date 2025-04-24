@@ -19,6 +19,7 @@ declare global {
   interface Window {
     activateMgcClient: (id: string) => Promise<void>;
     editMgcClient: (client: any) => void;
+    deleteMgcClient?: (id: string) => Promise<void>;
   }
 }
 
