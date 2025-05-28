@@ -28,9 +28,27 @@ export async function getEvaluationClients() {
 
 export async function startEvaluation(clientId: string) {
   const startDate = new Date();
-  // Calculando a data de fim (60 dias após o início)
+
+  // Buscar o cliente para verificar o plano
+  const client = await prisma.client.findUnique({
+    where: { id: clientId },
+    select: { plan: true },
+  });
+
+  if (!client) {
+    throw new Error("Cliente não encontrado");
+  }
+
+  // Calcular a data de fim baseada no plano
   const endDate = new Date(startDate);
-  endDate.setDate(endDate.getDate() + 60);
+
+  if (client.plan === "TC - 50K") {
+    // Para o plano TC - 50K: 30 dias
+    endDate.setDate(endDate.getDate() + 30);
+  } else {
+    // Para todos os outros planos: 60 dias (padrão atual)
+    endDate.setDate(endDate.getDate() + 60);
+  }
 
   await prisma.client.update({
     where: { id: clientId },
