@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Bot, BotIcon, Command, SquareTerminal } from "lucide-react";
+import { BarChart3, Bot, BotIcon, Command, SquareTerminal } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -59,6 +59,18 @@ const data = {
         {
           title: "Clientes MGT",
           url: "/mgc-clients",
+        },
+      ],
+    },
+    {
+      title: "Análise e Controle",
+      url: "#",
+      icon: BarChart3,
+      isActive: true,
+      items: [
+        {
+          title: "Analista de Operações",
+          url: "/operations-analyst",
         },
       ],
     },
