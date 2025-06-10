@@ -91,14 +91,35 @@ export function isDirectPlan(planName: string): boolean {
 
 // ✅ Função para processar nome do plano
 export function processPlanName(description: string): string {
-  // Exemplo: "Trader DIRETO 100K - Profit One | THP" → "TC DIRETO - 100K"
-  // Exemplo: "Trader 100K - Profit One | THP" → "TC - 100K"
+  // Exemplos:
+  // "Trader DIRETO 5 - Profit One | THP" → "TC DIRETO - 5"
+  // "Trader DIRETO 10 - Profit One | THP" → "TC DIRETO - 10"
+  // "Trader 100K - Profit One | THP" → "TC - 100K"
+
+  console.log("[processPlanName] Descrição original:", description);
 
   const isDirect = description.toLowerCase().includes("direto");
-  const match = description.match(/(\d+K)/i);
-  const planValue = match ? match[1] : "50K"; // Default
+  const isMGT = description.toLowerCase().includes("mgt");
 
-  return isDirect ? `TC DIRETO - ${planValue}` : `TC - ${planValue}`;
+  let processedPlan: string;
+
+  if (isDirect) {
+    // ✅ Para planos DIRETO: extrair número simples (5, 10, 20, 25)
+    const directMatch = description.match(/DIRETO\s+(\d+)/i);
+    const planValue = directMatch ? directMatch[1] : "5"; // Default para 5
+    processedPlan = `TC DIRETO - ${planValue}`;
+  } else if (isMGT) {
+    processedPlan = `TC - MGT`;
+  } else {
+    // ✅ Para planos normais: extrair valor com K (100K, 250K, etc.)
+    const normalMatch = description.match(/(\d+K)/i);
+    const planValue = normalMatch ? normalMatch[1].toUpperCase() : "50K"; // Default
+    processedPlan = `TC - ${planValue}`;
+  }
+
+  console.log("[processPlanName] Plano processado:", processedPlan);
+
+  return processedPlan;
 }
 
 // ✅ Função para extrair plataforma do nome
