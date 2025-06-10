@@ -1,6 +1,7 @@
 // lib/services/hubla.ts
 import { prisma } from "@/lib/prisma";
 import { HublaWebhookPayload, HublaPaymentData } from "@/app/types/hubla";
+import { processPlanName, extractPlatform } from "@/app/types";
 import crypto from "crypto";
 
 export class HublaService {
@@ -29,6 +30,7 @@ export class HublaService {
         console.log("Order bump ignorado:", webhook.event.invoice.id);
         return null;
       }
+
       // Verificar tipo do evento e status
       if (
         webhook.type !== "invoice.payment_succeeded" ||
@@ -48,26 +50,24 @@ export class HublaService {
         usuario: webhook.event.user,
       });
 
-      // Extrair plataforma e plano do nome do produto
-      const productParts = webhook.event.product.name
-        .split("-")
-        .map((p) => p.trim());
-      let planPart = productParts[0]; // "Trader 5K, 10K, 25K ou 50K"
-      if (planPart) {
-        // Verificar plano
-        const matchPlan = planPart.match(/Trader (\d+K)/);
-        if (matchPlan) {
-          planPart = `TC - ${matchPlan[1]}`;
-        }
-      }
-      const platformPart = productParts[1]?.split("|")[0]?.trim(); // "Profit One" ou "Profit Pro"
+      // ✅ NOVA LÓGICA: Usar funções helper para processar nomes
+      const productName = webhook.event.product.name;
+      console.log("[Hubla Service] Nome do produto original:", productName);
+
+      // Processar plano usando a função helper
+      const processedPlan = processPlanName(productName);
+      console.log("[Hubla Service] Plano processado:", processedPlan);
+
+      // Extrair plataforma usando a função helper
+      const extractedPlatform = extractPlatform(productName);
+      console.log("[Hubla Service] Plataforma extraída:", extractedPlatform);
 
       // Tratamento para documento (pode não existir em ambiente de teste)
       const customerDocument = webhook.event.user.document
         ? webhook.event.user.document.replace(/[^\d]/g, "")
         : "00000000000"; // CPF padrão para testes
 
-      return {
+      const paymentData: HublaPaymentData = {
         hublaPaymentId: webhook.event.invoice.id,
         subscriptionId: webhook.event.invoice.subscriptionId,
         payerId: webhook.event.invoice.payerId,
@@ -77,12 +77,23 @@ export class HublaService {
         customerEmail: webhook.event.user.email,
         customerPhone: webhook.event.user.phone,
         customerDocument: customerDocument,
-        platform: platformPart || "Não especificado",
-        plan: planPart || "Não especificado",
+        platform: extractedPlatform,
+        plan: processedPlan, // ✅ Usando o plano processado
         status: webhook.event.invoice.status,
         saleDate: new Date(webhook.event.invoice.saleDate),
         paymentMethod: webhook.event.invoice.paymentMethod,
       };
+
+      // ✅ Log detalhado do processamento
+      console.log("[Hubla Service] Dados processados:", {
+        original: productName,
+        plano: processedPlan,
+        plataforma: extractedPlatform,
+        isDirect: processedPlan.includes("DIRETO"),
+        isMGT: processedPlan.includes("MGT"),
+      });
+
+      return paymentData;
     } catch (error) {
       console.error("Erro ao extrair dados do webhook:", error);
       console.error("Payload recebido:", webhook);

@@ -3,27 +3,37 @@ import {
   PagarmePaymentData,
   PagarmeWebhookPayload,
 } from "@/app/types/pagarme-webhook";
+import { processPlanName, extractPlatform } from "@/app/types"; // ✅ Import das funções helper
 
 export class PagarmeWebhookService {
   private extractProductInfo(description: string): {
     platform: string;
     plan: string;
   } {
-    // Similar ao método da Hubla
-    const parts = description.split("-").map((p) => p.trim());
-    let plan = parts[0]; // "Trader 500K"
-    const platform = parts[1]?.split("|")[0]?.trim() || "Não especificado"; // "Profit One"
+    // ✅ ATUALIZADO: Usar as funções helper para consistência
+    console.log("[Pagarme Webhook Service] Descrição original:", description);
 
-    if (plan) {
-      const matchPlan = plan.match(/Trader (\d+K)/);
-      if (matchPlan) {
-        plan = `TC - ${matchPlan[1]}`;
-      }
-    }
+    const processedPlan = processPlanName(description);
+    const extractedPlatform = extractPlatform(description);
+
+    console.log("[Pagarme Webhook Service] Plano processado:", processedPlan);
+    console.log(
+      "[Pagarme Webhook Service] Plataforma extraída:",
+      extractedPlatform
+    );
+
+    // ✅ Log detalhado para debugging
+    console.log("[Pagarme Webhook Service] Detecções:", {
+      original: description,
+      plano: processedPlan,
+      plataforma: extractedPlatform,
+      isDirect: processedPlan.includes("DIRETO"),
+      isMGT: processedPlan.includes("MGT"),
+    });
 
     return {
-      platform,
-      plan: plan || "Não especificado",
+      platform: extractedPlatform,
+      plan: processedPlan,
     };
   }
 
@@ -32,6 +42,8 @@ export class PagarmeWebhookService {
   ): PagarmePaymentData | null {
     try {
       const charge = webhook.data.charges[0];
+
+      // ✅ ATUALIZADO: Usar o método atualizado
       const { platform, plan } = this.extractProductInfo(
         webhook.data.items[0].description
       );
@@ -59,15 +71,16 @@ export class PagarmeWebhookService {
           }
         : undefined;
 
-      return {
+      // ✅ Retorna dados com plano processado
+      const paymentData: PagarmePaymentData = {
         orderId: webhook.data.id,
         amount: webhook.data.amount,
         customerName: webhook.data.customer.name,
         customerEmail: webhook.data.customer.email,
         customerPhone: `${webhook.data.customer.phones.mobile_phone.area_code}${webhook.data.customer.phones.mobile_phone.number}`,
         customerDocument: webhook.data.customer.document,
-        platform,
-        plan,
+        platform, // ✅ Usando plataforma processada
+        plan, // ✅ Usando plano processado (pode incluir "DIRETO")
         status: webhook.data.status,
         saleDate: new Date(webhook.data.created_at),
         paymentMethod: charge.payment_method,
@@ -84,6 +97,18 @@ export class PagarmeWebhookService {
         },
         splitInfo,
       };
+
+      // ✅ Log final do processamento
+      console.log("[Pagarme Webhook Service] Dados finais processados:", {
+        orderId: paymentData.orderId,
+        plan: paymentData.plan,
+        platform: paymentData.platform,
+        isDirect: paymentData.plan.includes("DIRETO"),
+        isMGT: paymentData.plan.includes("MGT"),
+        productType: paymentData.metadata.productType,
+      });
+
+      return paymentData;
     } catch (error) {
       console.error("Erro ao extrair dados do webhook Pagar.me:", error);
       return null;

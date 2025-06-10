@@ -30,6 +30,11 @@ export async function getDashboardStats() {
     where: { traderStatus: TraderStatus.APPROVED },
   });
 
+  // ✅ Clientes diretos (nova métrica separada)
+  const directClients = await prisma.client.count({
+    where: { traderStatus: TraderStatus.DIRECT },
+  });
+
   const approvalRate =
     completedClients > 0
       ? ((approvedClients / completedClients) * 100).toFixed(1)
@@ -57,6 +62,17 @@ export async function getDashboardStats() {
     },
   });
 
+  // ✅ NOVA MÉTRICA: Estatísticas de planos diretos por plano
+  const directByPlan = await prisma.client.groupBy({
+    by: ["plan"],
+    _count: {
+      id: true,
+    },
+    where: {
+      traderStatus: TraderStatus.DIRECT,
+    },
+  });
+
   const planApprovalRates = approvalRateByPlan
     .map((plan) => {
       const totalForPlan = plan._count.id;
@@ -76,13 +92,77 @@ export async function getDashboardStats() {
     .sort((a, b) => b.rateNumber - a.rateNumber) // Ordena por taxa em ordem decrescente
     .map(({ plan, rate }) => ({ plan, rate })); // Remove o campo auxiliar rateNumber
 
+  // ✅ NOVA ESTATÍSTICA: Evolução mensal separando avaliações de diretos
+  const currentMonth = new Date();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const lastMonth = subMonths(currentMonth, 1);
+
+  const monthlyData = await Promise.all(
+    Array.from({ length: 6 }, (_, i) => {
+      const month = subMonths(currentMonth, i);
+      const startDate = startOfMonth(month);
+      const endDate = endOfMonth(month);
+
+      return Promise.all([
+        // Clientes avaliativos criados no mês
+        prisma.client.count({
+          where: {
+            createdAt: {
+              gte: startDate,
+              lte: endDate,
+            },
+            traderStatus: {
+              in: [
+                TraderStatus.WAITING,
+                TraderStatus.IN_PROGRESS,
+                TraderStatus.APPROVED,
+                TraderStatus.REJECTED,
+              ],
+            },
+          },
+        }),
+        // Clientes diretos criados no mês
+        prisma.client.count({
+          where: {
+            createdAt: {
+              gte: startDate,
+              lte: endDate,
+            },
+            traderStatus: TraderStatus.DIRECT,
+          },
+        }),
+        // Aprovações no mês
+        prisma.client.count({
+          where: {
+            endDate: {
+              gte: startDate,
+              lte: endDate,
+            },
+            traderStatus: TraderStatus.APPROVED,
+          },
+        }),
+      ]).then(([evaluative, direct, approved]) => ({
+        month: month.toISOString(),
+        evaluativeClients: evaluative,
+        directClients: direct,
+        approvedClients: approved,
+      }));
+    })
+  );
+
   return {
     totalClients,
     awaitingClients,
     inEvaluationClients,
-    completedClients,
+    completedClients, // ✅ Somente avaliações finalizadas
+    directClients, // ✅ Nova métrica
     approvalRate,
     planApprovalRates,
+    directByPlan: directByPlan.map((plan) => ({
+      plan: plan.plan,
+      count: plan._count.id,
+    })),
+    monthlyData: monthlyData.reverse(),
   };
 }
 

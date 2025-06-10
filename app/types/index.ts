@@ -5,6 +5,7 @@ export const TraderStatus = {
   IN_PROGRESS: "Em Curso",
   APPROVED: "Aprovado",
   REJECTED: "Reprovado",
+  DIRECT: "Direto",
 } as const;
 
 // Adicionar novo status para PaidAccount
@@ -64,6 +65,7 @@ export const clientSchema = z.object({
     TraderStatus.IN_PROGRESS,
     TraderStatus.APPROVED,
     TraderStatus.REJECTED,
+    TraderStatus.DIRECT,
   ]),
   startDate: z.date().optional().nullable(),
   endDate: z.date().optional().nullable(),
@@ -76,3 +78,35 @@ export const clientSchema = z.object({
 });
 
 export type Client = z.infer<typeof clientSchema>;
+
+// ✅ Função helper para verificar se um status conta para estatísticas de aprovação
+export function isEvaluationStatus(status: TraderStatusType): boolean {
+  return status === TraderStatus.APPROVED || status === TraderStatus.REJECTED;
+}
+
+// ✅ Função helper para verificar se é um plano direto
+export function isDirectPlan(planName: string): boolean {
+  return planName.includes("DIRETO");
+}
+
+// ✅ Função para processar nome do plano
+export function processPlanName(description: string): string {
+  // Exemplo: "Trader DIRETO 100K - Profit One | THP" → "TC DIRETO - 100K"
+  // Exemplo: "Trader 100K - Profit One | THP" → "TC - 100K"
+
+  const isDirect = description.toLowerCase().includes("direto");
+  const match = description.match(/(\d+K)/i);
+  const planValue = match ? match[1] : "50K"; // Default
+
+  return isDirect ? `TC DIRETO - ${planValue}` : `TC - ${planValue}`;
+}
+
+// ✅ Função para extrair plataforma do nome
+export function extractPlatform(description: string): string {
+  if (description.toLowerCase().includes("profit pro")) {
+    return "Profit Pro";
+  } else if (description.toLowerCase().includes("profit one")) {
+    return "Profit One";
+  }
+  return "Profit One"; // Default
+}

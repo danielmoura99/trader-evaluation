@@ -2,7 +2,8 @@
 import { HublaService } from "@/lib/services/hubla";
 import { HublaWebhookPayload } from "@/app/types/hubla";
 import { NextRequest } from "next/server";
-import { sendRegistrationEmail } from "@/lib/email-service"; // Adicionar este import
+import { sendRegistrationEmail } from "@/lib/email-service";
+//import { isDirectPlan } from "@/app/types"; // ✅ Nova função helper
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,10 +26,6 @@ export async function POST(req: NextRequest) {
         { status: 401 }
       );
     }
-
-    // Log dos headers
-    const allHeaders = Array.from(req.headers.entries());
-    console.log("[Hubla Webhook] Headers completos:", allHeaders);
 
     // Lê o payload
     const payload = await req.text();
@@ -100,14 +97,21 @@ export async function POST(req: NextRequest) {
     // Processa o pagamento
     const payment = await hublaService.processPayment(paymentData);
 
+    // ✅ NOVA LÓGICA: Detectar tipos de plano
     const isMGTPlan = paymentData.plan.includes("MGT");
-    console.log(`[Hubla Webhook] É cliente MGT? ${isMGTPlan ? "Sim" : "Não"}`);
+    const isDirectPlan = paymentData.plan.includes("DIRETO");
 
-    // URL de registro diferente baseada no tipo de cliente
+    console.log(`[Hubla Webhook] Tipo de plano detectado:`, {
+      isMGTPlan: isMGTPlan ? "Sim" : "Não",
+      isDirectPlan: isDirectPlan ? "Sim" : "Não",
+      planName: paymentData.plan,
+    });
+
+    // ✅ URLs de registro baseadas no tipo de cliente
     let registrationUrl;
 
     if (isMGTPlan) {
-      // URL para clientes MGT com flag específica
+      // URL para clientes MGT
       registrationUrl = `${
         process.env.CLIENT_PORTAL_URL || "https://portal.tradershouse.com.br"
       }/registration/${payment.hublaPaymentId}?isMGT=true`;
@@ -116,13 +120,29 @@ export async function POST(req: NextRequest) {
         "[Hubla Webhook] Gerando URL para cliente MGT:",
         registrationUrl
       );
+    } else if (isDirectPlan) {
+      // ✅ URL para clientes DIRETO
+      registrationUrl = `${
+        process.env.CLIENT_PORTAL_URL || "https://portal.tradershouse.com.br"
+      }/registration/${payment.hublaPaymentId}?isDirect=true`;
+
+      console.log(
+        "[Hubla Webhook] Gerando URL para cliente DIRETO:",
+        registrationUrl
+      );
     } else {
-      // URL padrão para clientes regulares
+      // URL padrão para clientes regulares (avaliativos)
       registrationUrl = `${
         process.env.CLIENT_PORTAL_URL || "https://portal.tradershouse.com.br"
       }/registration/${payment.hublaPaymentId}`;
+
+      console.log(
+        "[Hubla Webhook] Gerando URL para cliente regular:",
+        registrationUrl
+      );
     }
-    // Adicionar envio de email
+
+    // Envio de email
     try {
       await sendRegistrationEmail({
         customerName: paymentData.customerName,
@@ -147,6 +167,7 @@ export async function POST(req: NextRequest) {
       plan: payment.plan,
       registrationUrl,
       isMGTPlan,
+      isDirectPlan, // ✅ Novo log
     });
 
     console.log("=== FIM DO PROCESSAMENTO DO WEBHOOK ===\n");
@@ -157,6 +178,7 @@ export async function POST(req: NextRequest) {
       registrationUrl,
       sandbox: isSandbox,
       isMGTPlan,
+      isDirectPlan, // ✅ Novo retorno
     });
   } catch (error) {
     console.error("[Hubla Webhook] Erro crítico ao processar webhook:", error);

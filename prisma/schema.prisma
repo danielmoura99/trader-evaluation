@@ -18,7 +18,7 @@ model Client {
   email             String    
   platform          String
   plan              String
-  traderStatus      String    // "Aguardando Inicio" | "Em Curso" | "Aprovado" | "Reprovado"
+  traderStatus      String    // "Aguardando Inicio" | "Em Curso" | "Aprovado" | "Reprovado" | "Direto"
   startDate         DateTime?
   endDate           DateTime?
   observation       String?

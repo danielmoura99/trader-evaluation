@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { processEvaluation } from "@/lib/services/evaluation-service";
 import { processCombo } from "@/lib/services/combo-service";
 import { processEducational } from "@/lib/services/educational-service";
+import { processDirect } from "@/lib/services/direct-service"; // ✅ Novo import
 
 export async function POST(req: NextRequest) {
   try {
@@ -51,18 +52,31 @@ export async function POST(req: NextRequest) {
 
     console.log("[Pagar.me Webhook] Pagamento registrado:", payment.id);
 
-    // Determinar o tipo de produto e processar conforme o cenário apropriado
+    // ✅ NOVA LÓGICA: Detectar tipos de plano
     const productType = paymentData.metadata.productType?.toLowerCase();
+    const isMGTPlan = paymentData.plan.includes("MGT");
+    const isDirectPlan = paymentData.plan.includes("DIRETO");
 
-    console.log("[Pagar.me Webhook] Metadata recebido:", {
+    console.log("[Pagar.me Webhook] Análise do tipo de produto:", {
       productType: paymentData.metadata.productType,
       courseId: paymentData.metadata.courseId,
       course_id: paymentData.metadata.course_id,
+      planName: paymentData.plan,
+      isMGTPlan: isMGTPlan ? "Sim" : "Não",
+      isDirectPlan: isDirectPlan ? "Sim" : "Não", // ✅ Novo log
     });
 
     let processResult;
 
-    if (productType === "combo") {
+    // ✅ NOVA CONDIÇÃO: Verificar se é plano direto PRIMEIRO
+    if (isDirectPlan) {
+      console.log("[Pagar.me Webhook] 🚀 Processando como PLANO DIRETO");
+      processResult = await processDirect({
+        paymentData,
+        hublaPaymentId: payment.hublaPaymentId,
+      });
+    } else if (productType === "combo") {
+      // ✅ MANTIDO: Funcionalidade existente
       console.log(
         "[Pagar.me Webhook] Processando como COMBO (avaliação + educacional)"
       );
@@ -71,13 +85,14 @@ export async function POST(req: NextRequest) {
         hublaPaymentId: payment.hublaPaymentId,
       });
     } else if (productType === "educational") {
+      // ✅ MANTIDO: Funcionalidade existente
       console.log("[Pagar.me Webhook] Processando como EDUCACIONAL");
       processResult = await processEducational({
         paymentData,
         hublaPaymentId: payment.hublaPaymentId,
       });
     } else {
-      // Default: processar como avaliação normal
+      // ✅ MANTIDO: Default para avaliação normal
       console.log("[Pagar.me Webhook] Processando como AVALIAÇÃO");
       processResult = await processEvaluation({
         paymentData,
@@ -89,6 +104,8 @@ export async function POST(req: NextRequest) {
       type: processResult.type,
       success: processResult.success,
       emailSent: processResult.emailSent,
+      isDirectPlan: isDirectPlan, // ✅ Novo log
+      autoCreatedPaidAccount: isDirectPlan, // ✅ Indica se criou conta automaticamente
     });
 
     console.log("=== FIM DO PROCESSAMENTO DO WEBHOOK PAGAR.ME ===\n");
@@ -98,6 +115,8 @@ export async function POST(req: NextRequest) {
       paymentId: payment.id,
       orderId: paymentData.orderId,
       processResult,
+      planType: isDirectPlan ? "direct" : isMGTPlan ? "mgc" : "regular", // ✅ Novo campo
+      autoCreatedPaidAccount: isDirectPlan, // ✅ Novo campo
     });
   } catch (error) {
     console.error("[Pagar.me Webhook] Erro crítico:", error);
