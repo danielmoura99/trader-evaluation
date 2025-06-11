@@ -1,4 +1,4 @@
-// columns.tsx
+// app/(dashboard)/paid-accounts/_columns/columns.tsx
 import { ColumnDef } from "@tanstack/react-table";
 import { PaidAccount } from "@/app/types";
 import { format } from "date-fns";
@@ -12,7 +12,7 @@ export const columns: ColumnDef<
       email: string;
       cpf: string;
       birthDate: Date;
-      startDate: Date | null;
+      startDate: Date | null; // ✅ ADICIONADO: Data de início do cliente
     };
   }
 >[] = [
@@ -43,13 +43,20 @@ export const columns: ColumnDef<
       return <span className={`font-medium ${color}`}>{status}</span>;
     },
   },
+  // ✅ NOVA COLUNA: Data de Início (do formulário do cliente)
   {
     accessorKey: "client.startDate",
     header: "Data de Início",
     cell: ({ row }) => {
       const date = row.original.client.startDate;
       if (!date) return "-";
-      return format(new Date(date), "dd/MM/yyyy", { locale: ptBR });
+
+      // ✅ CORRIGIDO: Ajustar timezone para evitar "um dia antes"
+      const dateObj = new Date(date);
+      const offset = dateObj.getTimezoneOffset();
+      const adjustedDate = new Date(dateObj.getTime() + offset * 60 * 1000);
+
+      return format(adjustedDate, "dd/MM/yyyy", { locale: ptBR });
     },
   },
   {
@@ -58,7 +65,13 @@ export const columns: ColumnDef<
     cell: ({ row }) => {
       const date = row.getValue("startDate");
       if (!date) return "-";
-      return format(new Date(date as string), "dd/MM/yyyy", { locale: ptBR });
+
+      // ✅ CORRIGIDO: Ajustar timezone
+      const dateObj = new Date(date as string);
+      const offset = dateObj.getTimezoneOffset();
+      const adjustedDate = new Date(dateObj.getTime() + offset * 60 * 1000);
+
+      return format(adjustedDate, "dd/MM/yyyy", { locale: ptBR });
     },
   },
   {
@@ -67,7 +80,13 @@ export const columns: ColumnDef<
     cell: ({ row }) => {
       const date = row.getValue("endDate");
       if (!date) return "-";
-      return format(new Date(date as string), "dd/MM/yyyy", { locale: ptBR });
+
+      // ✅ CORRIGIDO: Ajustar timezone
+      const dateObj = new Date(date as string);
+      const offset = dateObj.getTimezoneOffset();
+      const adjustedDate = new Date(dateObj.getTime() + offset * 60 * 1000);
+
+      return format(adjustedDate, "dd/MM/yyyy", { locale: ptBR });
     },
   },
   {
