@@ -3,7 +3,6 @@ import { HublaService } from "@/lib/services/hubla";
 import { HublaWebhookPayload } from "@/app/types/hubla";
 import { NextRequest } from "next/server";
 import { sendRegistrationEmail } from "@/lib/email-service";
-//import { isDirectPlan } from "@/app/types"; // ✅ Nova função helper
 
 export async function POST(req: NextRequest) {
   try {
@@ -97,7 +96,7 @@ export async function POST(req: NextRequest) {
     // Processa o pagamento
     const payment = await hublaService.processPayment(paymentData);
 
-    // ✅ NOVA LÓGICA: Detectar tipos de plano
+    // ✅ CORRIGIDO: Detectar tipos de plano
     const isMGTPlan = paymentData.plan.includes("MGT");
     const isDirectPlan = paymentData.plan.includes("DIRETO");
 
@@ -107,7 +106,7 @@ export async function POST(req: NextRequest) {
       planName: paymentData.plan,
     });
 
-    // ✅ URLs de registro baseadas no tipo de cliente
+    // ✅ CORRIGIDO: URLs de registro baseadas no tipo de cliente
     let registrationUrl;
 
     if (isMGTPlan) {
@@ -121,7 +120,7 @@ export async function POST(req: NextRequest) {
         registrationUrl
       );
     } else if (isDirectPlan) {
-      // ✅ URL para clientes DIRETO
+      // ✅ CORRIGIDO: URL para clientes DIRETO (não cria cliente no webhook)
       registrationUrl = `${
         process.env.CLIENT_PORTAL_URL || "https://portal.tradershouse.com.br"
       }/registration/${payment.hublaPaymentId}?isDirect=true`;
@@ -167,7 +166,8 @@ export async function POST(req: NextRequest) {
       plan: payment.plan,
       registrationUrl,
       isMGTPlan,
-      isDirectPlan, // ✅ Novo log
+      isDirectPlan,
+      clientCreatedInWebhook: false, // ✅ Nunca cria cliente no webhook, só na API de registro
     });
 
     console.log("=== FIM DO PROCESSAMENTO DO WEBHOOK ===\n");
@@ -178,7 +178,8 @@ export async function POST(req: NextRequest) {
       registrationUrl,
       sandbox: isSandbox,
       isMGTPlan,
-      isDirectPlan, // ✅ Novo retorno
+      isDirectPlan,
+      clientCreatedInWebhook: false, // ✅ Cliente será criado na API de registro
     });
   } catch (error) {
     console.error("[Hubla Webhook] Erro crítico ao processar webhook:", error);

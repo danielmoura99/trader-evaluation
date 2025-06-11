@@ -5,7 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { processEvaluation } from "@/lib/services/evaluation-service";
 import { processCombo } from "@/lib/services/combo-service";
 import { processEducational } from "@/lib/services/educational-service";
-import { processDirect } from "@/lib/services/direct-service"; // ✅ Novo import
+// ✅ REMOVIDO: import { processDirect } from "@/lib/services/direct-service";
+import { sendRegistrationEmail } from "@/lib/email-service"; // ✅ Adicionado
 
 export async function POST(req: NextRequest) {
   try {
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
 
     console.log("[Pagar.me Webhook] Pagamento registrado:", payment.id);
 
-    // ✅ NOVA LÓGICA: Detectar tipos de plano
+    // ✅ CORRIGIDO: Detectar tipos de plano
     const productType = paymentData.metadata.productType?.toLowerCase();
     const isMGTPlan = paymentData.plan.includes("MGT");
     const isDirectPlan = paymentData.plan.includes("DIRETO");
@@ -63,18 +64,52 @@ export async function POST(req: NextRequest) {
       course_id: paymentData.metadata.course_id,
       planName: paymentData.plan,
       isMGTPlan: isMGTPlan ? "Sim" : "Não",
-      isDirectPlan: isDirectPlan ? "Sim" : "Não", // ✅ Novo log
+      isDirectPlan: isDirectPlan ? "Sim" : "Não",
     });
 
     let processResult;
 
-    // ✅ NOVA CONDIÇÃO: Verificar se é plano direto PRIMEIRO
+    // ✅ CORRIGIDO: Planos DIRETO agora só registram pagamento e enviam email
     if (isDirectPlan) {
-      console.log("[Pagar.me Webhook] 🚀 Processando como PLANO DIRETO");
-      processResult = await processDirect({
-        paymentData,
-        hublaPaymentId: payment.hublaPaymentId,
-      });
+      console.log(
+        "[Pagar.me Webhook] 🚀 Processando como PLANO DIRETO - Apenas registro"
+      );
+
+      // ✅ Para planos DIRETO: apenas enviar email, o cliente será criado na API de registro
+      const registrationUrl = `${process.env.CLIENT_PORTAL_URL}/registration/${payment.hublaPaymentId}?isDirect=true`;
+
+      try {
+        await sendRegistrationEmail({
+          customerName: paymentData.customerName,
+          customerEmail: paymentData.customerEmail,
+          registrationUrl,
+        });
+
+        console.log(
+          "[Pagar.me Webhook] Email de registro DIRETO enviado com sucesso"
+        );
+
+        processResult = {
+          success: true,
+          type: "direct",
+          message: "Pagamento registrado e email enviado para plano direto",
+          registrationUrl,
+          emailSent: true,
+          clientCreated: false, // ✅ Cliente será criado na API de registro
+        };
+      } catch (emailError) {
+        console.error(
+          "[Pagar.me Webhook] Erro ao enviar email DIRETO:",
+          emailError
+        );
+
+        processResult = {
+          success: false,
+          type: "direct",
+          message: "Pagamento registrado, mas falha no envio do email",
+          emailSent: false,
+        };
+      }
     } else if (productType === "combo") {
       // ✅ MANTIDO: Funcionalidade existente
       console.log(
@@ -104,8 +139,8 @@ export async function POST(req: NextRequest) {
       type: processResult.type,
       success: processResult.success,
       emailSent: processResult.emailSent,
-      isDirectPlan: isDirectPlan, // ✅ Novo log
-      autoCreatedPaidAccount: isDirectPlan, // ✅ Indica se criou conta automaticamente
+      isDirectPlan: isDirectPlan,
+      clientCreatedInWebhook: isDirectPlan ? false : true, // ✅ Clientes DIRETO não são criados no webhook
     });
 
     console.log("=== FIM DO PROCESSAMENTO DO WEBHOOK PAGAR.ME ===\n");
@@ -115,8 +150,8 @@ export async function POST(req: NextRequest) {
       paymentId: payment.id,
       orderId: paymentData.orderId,
       processResult,
-      planType: isDirectPlan ? "direct" : isMGTPlan ? "mgc" : "regular", // ✅ Novo campo
-      autoCreatedPaidAccount: isDirectPlan, // ✅ Novo campo
+      planType: isDirectPlan ? "direct" : isMGTPlan ? "mgc" : "regular",
+      clientCreatedInWebhook: !isDirectPlan, // ✅ Indica onde o cliente foi/será criado
     });
   } catch (error) {
     console.error("[Pagar.me Webhook] Erro crítico:", error);
