@@ -97,6 +97,10 @@ export const columns: ColumnDef<Client>[] = [
     },
   },
   {
+    accessorKey: "observation",
+    header: "Observação",
+  },
+  {
     accessorKey: "birthDate",
     header: "Data de Nascimento",
     cell: ({ row }) => {
@@ -118,10 +122,7 @@ export const columns: ColumnDef<Client>[] = [
     accessorKey: "zipCode",
     header: "CEP",
   },
-  {
-    accessorKey: "observation",
-    header: "Observação",
-  },
+
   {
     accessorKey: "cancellationDate",
     header: ({ column }) => (
