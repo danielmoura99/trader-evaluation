@@ -12,6 +12,7 @@ export const columns: ColumnDef<
       email: string;
       cpf: string;
       birthDate: Date;
+      startDate: Date | null;
     };
   }
 >[] = [
@@ -40,6 +41,15 @@ export const columns: ColumnDef<
             : "text-red-500";
 
       return <span className={`font-medium ${color}`}>{status}</span>;
+    },
+  },
+  {
+    accessorKey: "client.startDate",
+    header: "Data de Início",
+    cell: ({ row }) => {
+      const date = row.original.client.startDate;
+      if (!date) return "-";
+      return format(new Date(date), "dd/MM/yyyy", { locale: ptBR });
     },
   },
   {

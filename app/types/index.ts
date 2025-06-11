@@ -45,6 +45,15 @@ export const paidAccountSchema = z.object({
   endDate: z.date().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
+  client: z
+    .object({
+      name: z.string(),
+      email: z.string(),
+      cpf: z.string(),
+      birthDate: z.date(),
+      startDate: z.date().nullable(), // ✅ ADICIONADO: Data de início do cliente (do formulário)
+    })
+    .optional(),
 });
 
 export type PaidAccount = z.infer<typeof paidAccountSchema>;

@@ -1,4 +1,4 @@
-// page.tsx
+// app/(dashboard)/paid-accounts/page.tsx
 "use client";
 
 import { DataTable } from "@/components/ui/data-table";
@@ -25,6 +25,7 @@ declare global {
           email: string;
           cpf: string;
           birthDate: Date;
+          startDate: Date | null; // ✅ Incluindo startDate do cliente
         };
       }
     ) => void;
@@ -39,12 +40,22 @@ function PaidAccountsContent() {
         email: string;
         cpf: string;
         birthDate: Date;
+        startDate: Date | null; // ✅ Incluindo startDate do cliente
       };
     })[]
   >([]);
-  const [editingAccount, setEditingAccount] = useState<PaidAccount | null>(
-    null
-  );
+  const [editingAccount, setEditingAccount] = useState<
+    | (PaidAccount & {
+        client: {
+          name: string;
+          email: string;
+          cpf: string;
+          birthDate: Date;
+          startDate: Date | null;
+        };
+      })
+    | null
+  >(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const { toast } = useToast();
 
@@ -58,6 +69,7 @@ function PaidAccountsContent() {
             email: string;
             cpf: string;
             birthDate: Date;
+            startDate: Date | null;
           };
         })[]
       );
@@ -84,21 +96,35 @@ function PaidAccountsContent() {
     }
   }, []);
 
-  const handleEditSubmit = async (data: { platform: string; plan: string }) => {
+  // ✅ NOVO: Handler expandido para todos os campos
+  const handleEditSubmit = async (data: {
+    // Dados da conta remunerada
+    platform: string;
+    plan: string;
+    status: string;
+    startDate?: Date | null;
+    endDate?: Date | null;
+
+    // Dados do cliente
+    clientName: string;
+    clientEmail: string;
+    clientStartDate?: Date | null;
+  }) => {
     try {
       if (editingAccount) {
         await updatePaidAccount(editingAccount.id, data);
         setEditModalOpen(false);
         fetchAccounts();
         toast({
-          title: "Sucesso",
-          description: "Conta atualizada com sucesso",
+          title: "✅ Sucesso",
+          description: "Conta e dados do cliente atualizados com sucesso",
         });
       }
-    } catch {
+    } catch (error) {
+      console.error("Erro ao atualizar:", error);
       toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao atualizar a conta",
+        title: "❌ Erro",
+        description: "Ocorreu um erro ao atualizar os dados",
         variant: "destructive",
       });
     }
@@ -112,18 +138,28 @@ function PaidAccountsContent() {
         </h1>
       </div>
 
+      {/* ✅ Modal de edição expandido */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-        <DialogContent className="bg-zinc-900 border-zinc-800">
+        <DialogContent className="bg-zinc-900 border-zinc-800 max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-zinc-100">
-              Editar Conta Remunerada
+            <DialogTitle className="text-zinc-100 text-xl">
+              ✏️ Editar Conta Remunerada
             </DialogTitle>
           </DialogHeader>
           {editingAccount && (
             <EditPaidAccountForm
               initialData={{
+                // Dados da conta remunerada
                 platform: editingAccount.platform,
                 plan: editingAccount.plan,
+                status: editingAccount.status,
+                startDate: editingAccount.startDate,
+                endDate: editingAccount.endDate,
+
+                // Dados do cliente
+                clientName: editingAccount.client.name,
+                clientEmail: editingAccount.client.email,
+                clientStartDate: editingAccount.client.startDate,
               }}
               onSubmit={handleEditSubmit}
               onCancel={() => setEditModalOpen(false)}
