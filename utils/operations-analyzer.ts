@@ -78,16 +78,23 @@ export function calculateTradingCost(asset: string, quantity: number): number {
  * Determina o nível de risco baseado no percentual da meta
  */
 export function calculateRiskLevel(
-  percentOfGoal: number
+  percentOfGoal: number,
+  netResult: number
 ): "safe" | "warning" | "violation" {
+  if (netResult < 0) {
+    return "safe";
+  }
+
   const absPercent = Math.abs(percentOfGoal);
+
+  let riskLevel: "safe" | "warning" | "violation";
 
   if (absPercent <= 30) {
     return "safe";
   } else if (absPercent <= 35) {
     return "warning"; // Zona amarela: 30-35%
   } else {
-    return "violation"; // Zona vermelha: >35%
+    return "violation"; // Zona vermelha: >35% (apenas para positivos)
   }
 }
 
@@ -218,7 +225,7 @@ export function analyzeOperationsFile(
   for (const [date, data] of mapEntries) {
     const netResult = data.totalResult - data.totalCosts;
     const percentOfGoal = (Math.abs(netResult) / planGoal) * 100;
-    const riskLevel = calculateRiskLevel(percentOfGoal);
+    const riskLevel = calculateRiskLevel(percentOfGoal, netResult);
 
     dailyResults.push({
       date,

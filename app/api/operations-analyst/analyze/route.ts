@@ -2,7 +2,6 @@
 // app/api/operations-analyst/analyze/route.ts
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import * as XLSX from "xlsx";
 
 const PLAN_GOALS = {
   "TC - 50K": 1000,
@@ -24,7 +23,7 @@ interface DailyResult {
   costs: number;
   netResult: number;
   percentOfGoal: number;
-  riskLevel: "safe" | "warning" | "violation"; // Novo campo para nível de risco
+  riskLevel: "safe" | "warning" | "violation";
 }
 
 interface Violation {
@@ -32,11 +31,185 @@ interface Violation {
   result: number;
   netResult: number;
   percentOfGoal: number;
-  type: "warning" | "violation"; // Novo campo para tipo
+  type: "warning" | "violation";
 }
 
-// Tipagem para as linhas do Excel
-type ExcelRow = (string | number | Date | null | undefined)[];
+interface CSVRow {
+  Subconta?: string;
+  Ativo?: string;
+  Abertura?: string;
+  Fechamento?: string;
+  "Tempo Operação"?: string;
+  "Qtd Compra"?: string;
+  "Qtd Venda"?: string;
+  Lado?: string;
+  "Preço Compra"?: string;
+  "Preço Venda"?: string;
+  "Preço de Mercado"?: string;
+  "Res. Intervalo"?: string;
+  "Res. Intervalo (%)"?: string;
+  "Número Operação"?: string;
+  "Res. Operação"?: string;
+  "Res. Operação (%)"?: string;
+  TET?: string;
+  Total?: string;
+}
+
+/**
+ * ✅ FUNÇÃO PARA NORMALIZAR HEADERS COM PROBLEMAS DE ENCODING
+ */
+function normalizeCSVHeaders(headers: string[]): string[] {
+  const headerMap: Record<string, string> = {
+    "Tempo Opera��o": "Tempo Operação",
+    "Pre�o Compra": "Preço Compra",
+    "Pre�o Venda": "Preço Venda",
+    "Pre�o de Mercado": "Preço de Mercado",
+    "N�mero Opera��o": "Número Operação",
+    "Res. Opera��o": "Res. Operação",
+    "Res. Opera��o (%)": "Res. Operação (%)",
+    Subconta: "Subconta",
+    Ativo: "Ativo",
+    Abertura: "Abertura",
+    Fechamento: "Fechamento",
+    "Qtd Compra": "Qtd Compra",
+    "Qtd Venda": "Qtd Venda",
+    Lado: "Lado",
+    "Res. Intervalo": "Res. Intervalo",
+    "Res. Intervalo (%)": "Res. Intervalo (%)",
+    TET: "TET",
+    Total: "Total",
+  };
+
+  return headers.map((header) => {
+    const trimmedHeader = header.trim();
+    return headerMap[trimmedHeader] || trimmedHeader;
+  });
+}
+
+/**
+ * ✅ FUNÇÃO PARSECSV (mantida igual)
+ */
+function parseCSV(csvContent: string): CSVRow[] {
+  const lines = csvContent.split("\n");
+
+  let headerLineIndex = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].includes("Subconta") && lines[i].includes("Ativo")) {
+      headerLineIndex = i;
+      break;
+    }
+  }
+
+  if (headerLineIndex === -1) {
+    throw new Error(
+      "Formato de arquivo inválido. Não foi possível encontrar o cabeçalho das operações."
+    );
+  }
+
+  const headerLine = lines[headerLineIndex];
+  const rawHeaders = headerLine.split(";").map((h) => h.trim());
+  const headers = normalizeCSVHeaders(rawHeaders);
+
+  console.log("[CSV Parser] Headers normalizados:", headers);
+
+  const dataLines = lines
+    .slice(headerLineIndex + 1)
+    .filter((line) => line.trim() !== "");
+  const parsedData: CSVRow[] = [];
+
+  for (const line of dataLines) {
+    const values = line.split(";");
+    const row: CSVRow = {};
+
+    headers.forEach((header, index) => {
+      if (values[index] !== undefined) {
+        row[header as keyof CSVRow] = values[index]?.trim();
+      }
+    });
+
+    if (row.Subconta && row.Ativo && row.Abertura && row["Res. Operação"]) {
+      parsedData.push(row);
+      console.log(
+        `[CSV Parser] Operação: ${row.Ativo} em ${row.Abertura} = R$ ${row["Res. Operação"]}`
+      );
+    }
+  }
+
+  return parsedData;
+}
+
+/**
+ * ✅ FUNÇÃO FINAL CORRIGIDA: Parse de data brasileira com timezone correto
+ */
+function fixDateFormatting(
+  dateValue: Date | string | number | null | undefined
+): string | null {
+  if (!dateValue) return null;
+
+  try {
+    let baseDate: Date;
+
+    if (dateValue instanceof Date) {
+      baseDate = new Date(dateValue);
+    } else if (typeof dateValue === "string") {
+      // ✅ Parse manual para formato brasileiro DD/MM/YYYY
+
+      // Extrair parte da data (antes do espaço se houver horário)
+      const [datePart] = dateValue.split(" ");
+
+      // Verificar se está no formato DD/MM/YYYY
+      if (datePart.includes("/")) {
+        const [day, month, year] = datePart.split("/");
+
+        // Validar se os componentes existem
+        if (!day || !month || !year) {
+          console.warn("[Date Fix] Formato de data inválido:", dateValue);
+          return null;
+        }
+
+        // ✅ CORREÇÃO CRÍTICA: Usar construtor com parâmetros (timezone local)
+        // Mês é 0-indexed, então maio = 4
+        baseDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+
+        console.log(
+          `[Date Fix] Parse brasileiro: ${datePart} -> Date(${year}, ${parseInt(month) - 1}, ${day}) -> ${baseDate.toLocaleDateString("pt-BR")}`
+        );
+      } else {
+        // Fallback para outros formatos
+        baseDate = new Date(dateValue);
+      }
+    } else if (typeof dateValue === "number") {
+      // Para serial dates do Excel
+      baseDate = new Date((dateValue - 25569) * 86400 * 1000);
+    } else {
+      return null;
+    }
+
+    // Verificar se a data é válida
+    if (isNaN(baseDate.getTime())) {
+      console.warn("[Date Fix] Data inválida após parse:", dateValue);
+      return null;
+    }
+
+    // ✅ USAR A DATA PARSEADA DIRETAMENTE (sem correções adicionais)
+    const finalDate = baseDate;
+
+    // Formatar para YYYY-MM-DD
+    const year = finalDate.getFullYear();
+    const month = String(finalDate.getMonth() + 1).padStart(2, "0");
+    const day = String(finalDate.getDate()).padStart(2, "0");
+
+    const dateKey = `${year}-${month}-${day}`;
+
+    console.log(
+      `[Date Fix] Final: ${dateValue} -> ${dateKey} (${finalDate.toLocaleDateString("pt-BR")})`
+    );
+    return dateKey;
+  } catch (error) {
+    console.warn("[Date Fix] Erro ao processar data:", dateValue, error);
+    return null;
+  }
+}
 
 /**
  * Calcula o custo de uma operação baseado no ativo e quantidade
@@ -50,24 +223,44 @@ function calculateTradingCost(asset: string, quantity: number): number {
     return quantity * TRADING_COSTS.WDO;
   }
 
-  return 0; // Se não for WIN nem WDO, custo zero
+  return 0;
 }
 
 /**
- * Determina o nível de risco baseado no percentual da meta
+ * ✅ FUNÇÃO CORRIGIDA: Determina o nível de risco (apenas positivos > 30%)
  */
 function calculateRiskLevel(
-  percentOfGoal: number
+  percentOfGoal: number,
+  netResult: number
 ): "safe" | "warning" | "violation" {
+  if (netResult < 0) {
+    return "safe";
+  }
+
   const absPercent = Math.abs(percentOfGoal);
 
   if (absPercent <= 30) {
     return "safe";
   } else if (absPercent <= 35) {
-    return "warning"; // Zona amarela: 30-35%
+    return "warning";
   } else {
-    return "violation"; // Zona vermelha: >35%
+    return "violation";
   }
+}
+
+/**
+ * ✅ FUNÇÃO: Converter valores CSV para números
+ */
+function parseCSVNumber(value: string | undefined): number {
+  if (!value || value === "") return 0;
+
+  const cleanValue = value
+    .replace(/\./g, "") // Remove pontos de milhares
+    .replace(",", ".") // Converte vírgula decimal para ponto
+    .replace(/\r/g, ""); // Remove carriage return
+
+  const numValue = parseFloat(cleanValue);
+  return isNaN(numValue) ? 0 : numValue;
 }
 
 export async function POST(req: NextRequest) {
@@ -90,48 +283,49 @@ export async function POST(req: NextRequest) {
     }
 
     const planGoal = parseFloat(planGoalStr);
-    const dailyLimit = planGoal * 0.3; // 30% da meta
+    const dailyLimit = planGoal * 0.3;
 
     console.log("[Operations Analyst] Meta do plano:", planGoal);
     console.log("[Operations Analyst] Limite diário:", dailyLimit);
 
-    // Ler arquivo Excel
-    const buffer = await file.arrayBuffer();
-    const workbook = XLSX.read(buffer, {
-      cellStyles: true,
-      cellFormula: true, // Corrigido: cellFormula em vez de cellFormulas
-      cellDates: true,
-      cellNF: true,
-      sheetStubs: true,
-    });
+    // LER ARQUIVO CSV
+    const csvContent = await file.text();
+    console.log(
+      "[Operations Analyst] Arquivo CSV lido, tamanho:",
+      csvContent.length
+    );
 
-    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-    const jsonData = XLSX.utils.sheet_to_json(worksheet, {
-      header: 1,
-    }) as ExcelRow[];
-
-    // Encontrar onde começam os dados (depois dos headers)
-    let dataStartIndex = -1;
-    for (let i = 0; i < jsonData.length; i++) {
-      const row = jsonData[i];
-      if (Array.isArray(row) && row[0] === "Subconta") {
-        dataStartIndex = i + 1;
-        break;
-      }
-    }
-
-    if (dataStartIndex === -1) {
+    // PARSE DO CSV
+    let csvData: CSVRow[];
+    try {
+      csvData = parseCSV(csvContent);
+      console.log(
+        "[Operations Analyst] Operações encontradas:",
+        csvData.length
+      );
+    } catch (error) {
+      console.error("[Operations Analyst] Erro ao processar CSV:", error);
       return Response.json(
         {
           success: false,
           error:
-            "Formato de arquivo inválido. Não foi possível encontrar os headers esperados.",
+            error instanceof Error
+              ? error.message
+              : "Formato de arquivo CSV inválido",
         },
         { status: 400 }
       );
     }
 
-    console.log("[Operations Analyst] Dados começam na linha:", dataStartIndex);
+    if (csvData.length === 0) {
+      return Response.json(
+        {
+          success: false,
+          error: "Nenhuma operação encontrada no arquivo CSV",
+        },
+        { status: 400 }
+      );
+    }
 
     // Processar operações e agrupar por dia
     const datesMap = new Map<
@@ -149,41 +343,24 @@ export async function POST(req: NextRequest) {
       }
     >();
 
-    for (let i = dataStartIndex; i < jsonData.length; i++) {
-      const row = jsonData[i];
-      if (row && row[2] && row[13] !== undefined) {
-        // row[1] = ativo, row[2] = data de abertura, row[5] = qtd compra, row[6] = qtd venda, row[13] = resultado da operação
-        const dateValue = row[2];
-        const asset = String(row[1] || "");
-        const qtdCompra =
-          typeof row[5] === "number" ? row[5] : parseFloat(String(row[5])) || 0;
-        const qtdVenda =
-          typeof row[6] === "number" ? row[6] : parseFloat(String(row[6])) || 0;
-        const resultadoRaw = row[13];
-        const resultado =
-          typeof resultadoRaw === "number"
-            ? resultadoRaw
-            : parseFloat(String(resultadoRaw)) || 0;
+    // PROCESSAR DADOS DO CSV
+    for (const row of csvData) {
+      if (row.Abertura && row["Res. Operação"]) {
+        const dateValue = row.Abertura;
+        const asset = row.Ativo || "";
+        const qtdCompra = parseCSVNumber(row["Qtd Compra"]);
+        const qtdVenda = parseCSVNumber(row["Qtd Venda"]);
+        const resultado = parseCSVNumber(row["Res. Operação"]);
 
-        // Quantidade é o maior valor entre compra e venda (já que uma operação pode ser só compra ou só venda)
         const quantity = Math.max(qtdCompra, qtdVenda);
-
-        // Calcular custo da operação
         const cost = calculateTradingCost(asset, quantity);
 
-        // Converter para data
-        let dateKey: string;
-        try {
-          if (dateValue instanceof Date) {
-            dateKey = dateValue.toISOString().split("T")[0];
-          } else if (typeof dateValue === "string") {
-            dateKey = new Date(dateValue).toISOString().split("T")[0];
-          } else {
-            continue; // Pular linha se não conseguir converter a data
-          }
-        } catch (error) {
+        // ✅ USAR FUNÇÃO CORRIGIDA COM TIMEZONE BRASILEIRO
+        const dateKey = fixDateFormatting(dateValue);
+
+        if (!dateKey) {
           console.warn(
-            "[Operations Analyst] Erro ao converter data:",
+            "[Operations Analyst] Não foi possível processar data:",
             dateValue
           );
           continue;
@@ -210,25 +387,24 @@ export async function POST(req: NextRequest) {
         });
 
         console.log(
-          `[Operations Analyst] Trade: ${asset} | Qtd: ${quantity} | Resultado: R${resultado} | Custo: R${cost.toFixed(2)}`
+          `[Operations Analyst] Trade: ${asset} | Data: ${dateKey} | Qtd: ${quantity} | Resultado: R${resultado}`
         );
       }
     }
 
-    // Calcular métricas
+    // CALCULAR MÉTRICAS
     const dailyResults: DailyResult[] = [];
     const violations: Violation[] = [];
     const warnings: Violation[] = [];
     let totalResult = 0;
     let totalCosts = 0;
 
-    // Converter Map.entries() para Array para compatibilidade
     const mapEntries = Array.from(datesMap.entries());
 
     for (const [date, data] of mapEntries) {
       const netResult = data.totalResult - data.totalCosts;
       const percentOfGoal = (Math.abs(netResult) / planGoal) * 100;
-      const riskLevel = calculateRiskLevel(percentOfGoal);
+      const riskLevel = calculateRiskLevel(percentOfGoal, netResult);
 
       dailyResults.push({
         date,
@@ -243,7 +419,6 @@ export async function POST(req: NextRequest) {
       totalResult += data.totalResult;
       totalCosts += data.totalCosts;
 
-      // Categorizar violações e avisos
       if (riskLevel === "violation") {
         violations.push({
           date,
@@ -268,12 +443,12 @@ export async function POST(req: NextRequest) {
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 
-    // Calcular validações - apenas violações (>35%) eliminam
+    // Calcular validações
     const totalNetResult = totalResult - totalCosts;
     const daysOperated = dailyResults.length;
     const minimumDays = daysOperated >= 10;
     const totalGoalReached = totalNetResult >= planGoal;
-    const dailyLimitRespected = violations.length === 0; // Apenas violações reais eliminam
+    const dailyLimitRespected = violations.length === 0;
     const approved = minimumDays && totalGoalReached && dailyLimitRespected;
 
     console.log("[Operations Analyst] Resultado da análise:", {
@@ -284,9 +459,11 @@ export async function POST(req: NextRequest) {
       violations: violations.length,
       warnings: warnings.length,
       approved,
+      timezoneFixed: true, // ✅ Indicador de que timezone foi corrigido
+      expectedDays: 10, // ✅ Esperamos 10 dias únicos para o arquivo do Fabio
     });
 
-    // Buscar dados do cliente no banco de dados
+    // Buscar dados do cliente (código existente permanece igual)
     let client = await prisma.client.findFirst({
       where: { id: clientId },
       select: {
@@ -298,7 +475,6 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Se não encontrar na tabela principal, buscar em MGC clients
     if (!client) {
       const mgcClient = await prisma.mgcClient.findFirst({
         where: { id: clientId },
@@ -316,7 +492,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Se não encontrar, usar dados padrão (fallback)
     if (!client) {
       client = {
         id: clientId,
@@ -344,7 +519,7 @@ export async function POST(req: NextRequest) {
         approved,
       },
       violations,
-      warnings, // Novo campo para avisos
+      warnings,
     };
 
     return Response.json({

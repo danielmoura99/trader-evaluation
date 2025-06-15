@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-//import { Input } from "@/components/ui/input";
 import { Upload, FileSpreadsheet, AlertCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -72,8 +71,8 @@ export function OperationsUpload({
       const file = event.target.files?.[0];
       if (!file) return;
 
-      // Verificar se é um arquivo Excel
-      const validExtensions = [".xlsx", ".xls"];
+      // ✅ VALIDAÇÃO ATUALIZADA: Apenas CSV
+      const validExtensions = [".csv"];
       const fileExtension = file.name
         .toLowerCase()
         .substring(file.name.lastIndexOf("."));
@@ -81,7 +80,7 @@ export function OperationsUpload({
       if (!validExtensions.includes(fileExtension)) {
         toast({
           title: "Arquivo inválido",
-          description: "Por favor, envie um arquivo Excel (.xlsx ou .xls).",
+          description: "Por favor, envie um arquivo CSV (.csv).",
           variant: "destructive",
         });
         return;
@@ -120,7 +119,6 @@ export function OperationsUpload({
         });
       } finally {
         setIsUploading(false);
-        // Reset do input
         event.target.value = "";
       }
     },
@@ -149,14 +147,15 @@ export function OperationsUpload({
                   Envie o arquivo de operações
                 </p>
                 <p className="text-sm text-zinc-500">
-                  Arquivos Excel (.xlsx, .xls) são aceitos
+                  {/* ✅ TEXTO ATUALIZADO */}
+                  Arquivos CSV (.csv) são aceitos
                 </p>
               </div>
 
               <div className="flex items-center space-x-4">
                 <input
                   type="file"
-                  accept=".xlsx,.xls"
+                  accept=".csv" // ✅ ACCEPT ATUALIZADO
                   onChange={handleFileUpload}
                   className="hidden"
                   id="operations-upload"
@@ -187,10 +186,12 @@ export function OperationsUpload({
           <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
           <div className="text-sm">
             <p className="text-amber-200 font-medium mb-1">
+              {/* ✅ TEXTO ATUALIZADO */}
               Formato esperado do arquivo:
             </p>
             <ul className="text-amber-100/80 space-y-1">
-              <li>• Relatório de operações em formato Excel</li>
+              <li>• Relatório de operações em formato CSV</li>
+              <li>• Delimitador: ponto e vírgula (;)</li>
               <li>
                 • Deve conter colunas: Data de Abertura e Resultado da Operação
               </li>

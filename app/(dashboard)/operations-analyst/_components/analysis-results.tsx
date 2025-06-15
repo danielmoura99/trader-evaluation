@@ -68,6 +68,16 @@ interface AnalysisResultsProps {
   result: AnalysisResult;
 }
 
+function formatDateWithTimezoneCorrection(date: string | Date): string {
+  if (!date) return "-";
+
+  const dateObj = new Date(date);
+  const offset = dateObj.getTimezoneOffset();
+  const adjustedDate = new Date(dateObj.getTime() + offset * 60 * 1000);
+
+  return format(adjustedDate, "dd/MM/yyyy", { locale: ptBR });
+}
+
 export function AnalysisResults({ result }: AnalysisResultsProps) {
   const { client, metrics, validation, violations, warnings } = result;
   const [analysisScenario, setAnalysisScenario] = useState<1 | 2 | 3>(1);
@@ -269,7 +279,7 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
               .map(
                 (w) => `
             <tr class="warning">
-                <td>${new Date(w.date).toLocaleDateString("pt-BR")}</td>
+                <td>${formatDateWithTimezoneCorrection(w.date)}</td>
                 <td>${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(w.netResult)}</td>
                 <td>${Math.abs(w.percentOfGoal).toFixed(1)}%</td>
             </tr>
