@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState, useMemo } from "react";
+import { Violation } from "@/utils/operations-analyzer";
 
 interface Client {
   id: string;
@@ -68,14 +70,33 @@ interface AnalysisResultsProps {
   result: AnalysisResult;
 }
 
-function formatDateWithTimezoneCorrection(date: string | Date): string {
+function formatDateForDisplay(date: string | Date): string {
   if (!date) return "-";
 
-  const dateObj = new Date(date);
-  const offset = dateObj.getTimezoneOffset();
-  const adjustedDate = new Date(dateObj.getTime() + offset * 60 * 1000);
+  let dateObj: Date;
 
-  return format(adjustedDate, "dd/MM/yyyy", { locale: ptBR });
+  if (typeof date === "string") {
+    // ✅ CORREÇÃO CRÍTICA: Forçar parsing como data local
+    if (date.includes("-")) {
+      // Formato YYYY-MM-DD vindo do backend
+      const [year, month, day] = date.split("-").map(Number);
+      // Criar data local (não UTC) - mês é 0-indexed
+      dateObj = new Date(year, month - 1, day);
+    } else {
+      // Fallback para outros formatos
+      dateObj = new Date(date);
+    }
+  } else {
+    dateObj = date;
+  }
+
+  // Verificar se a data é válida
+  if (isNaN(dateObj.getTime())) {
+    return "-";
+  }
+
+  // Formatar usando date-fns
+  return format(dateObj, "dd/MM/yyyy", { locale: ptBR });
 }
 
 export function AnalysisResults({ result }: AnalysisResultsProps) {
@@ -101,15 +122,14 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
         break;
 
       case 2:
-        // Cenário 2: Limitar dias >30% ao máximo de 30%
+        // Cenário 2: Limitar apenas GANHOS >30% ao máximo de 30%
         adjustedResults = metrics.dailyResults.map((day) => {
-          const absNetResult = Math.abs(day.netResult);
-          if (absNetResult > thirtyPercentLimit) {
-            // Limitar ao máximo de 30% da meta, mantendo o sinal
-            const limitedResult =
-              day.netResult >= 0 ? thirtyPercentLimit : -thirtyPercentLimit;
-            return { ...day, netResult: limitedResult, adjusted: true };
+          // Verificar se é ganho positivo E ultrapassa 30%
+          if (day.netResult > 0 && day.netResult > thirtyPercentLimit) {
+            // Limitar apenas ganhos positivos a 30% da meta
+            return { ...day, netResult: thirtyPercentLimit, adjusted: true };
           }
+          // Dias negativos permanecem inalterados, mesmo se >30%
           return { ...day, adjusted: false };
         });
 
@@ -122,11 +142,14 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
         break;
 
       case 3:
-        // Cenário 3: Remover completamente dias >35%
+        // Cenário 3: Remover apenas GANHOS >35% da análise
         adjustedResults = metrics.dailyResults
           .filter((day) => {
-            const absNetResult = Math.abs(day.netResult);
-            return absNetResult <= thirtyFivePercentLimit;
+            // Manter dias negativos, remover apenas ganhos >35%
+            if (day.netResult > 0 && day.netResult > thirtyFivePercentLimit) {
+              return false; // Remover ganho positivo >35%
+            }
+            return true; // Manter todos os outros (negativos ou positivos ≤35%)
           })
           .map((day) => ({ ...day, adjusted: false }));
 
@@ -140,15 +163,47 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
         break;
     }
 
+    // Recalcular violações e avisos baseados nos dados ajustados
+    const adjustedViolations: Violation[] = [];
+    const adjustedWarnings: Violation[] = [];
+
+    adjustedResults.forEach((day) => {
+      const percentOfGoal =
+        (Math.abs(day.netResult) / metrics.goalAmount) * 100;
+
+      // Só considerar violações/avisos em resultados positivos
+      if (day.netResult > 0) {
+        if (percentOfGoal > 35) {
+          adjustedViolations.push({
+            date: day.date,
+            result: day.result,
+            netResult: day.netResult,
+            percentOfGoal,
+            type: "violation",
+          });
+        } else if (percentOfGoal > 30) {
+          adjustedWarnings.push({
+            date: day.date,
+            result: day.result,
+            netResult: day.netResult,
+            percentOfGoal,
+            type: "warning",
+          });
+        }
+      }
+    });
+
     // Recalcular validações baseadas no cenário
+    const adjustedDailyLimitRespected = adjustedViolations.length === 0;
+
     const adjustedValidation = {
       minimumDays: daysConsidered >= 10,
       totalGoalReached: totalNetResult >= metrics.goalAmount,
-      dailyLimitRespected: validation.dailyLimitRespected, // Mantém a validação original
+      dailyLimitRespected: adjustedDailyLimitRespected,
       approved:
         daysConsidered >= 10 &&
         totalNetResult >= metrics.goalAmount &&
-        validation.dailyLimitRespected,
+        adjustedDailyLimitRespected,
     };
 
     return {
@@ -157,6 +212,8 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
       daysConsidered,
       adjustmentInfo,
       validation: adjustedValidation,
+      violations: adjustedViolations,
+      warnings: adjustedWarnings,
     };
   }, [analysisScenario, metrics, validation]);
 
@@ -187,13 +244,22 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
   };
 
   const generateReportContent = () => {
+    // ✅ USAR DADOS DO CENÁRIO SELECIONADO
     const reportData = {
       client,
-      metrics,
-      validation,
-      violations,
-      warnings,
+      metrics: {
+        ...metrics,
+        // Sobrescrever com dados ajustados do cenário
+        daysOperated: scenarioMetrics.daysConsidered,
+        dailyResults: scenarioMetrics.adjustedResults,
+        totalNetResult: scenarioMetrics.totalNetResult,
+      },
+      validation: scenarioMetrics.validation, // ✅ Validação ajustada
+      violations: scenarioMetrics.violations, // ✅ Violações ajustadas
+      warnings: scenarioMetrics.warnings, // ✅ Avisos ajustados
       generatedAt: new Date().toLocaleString("pt-BR"),
+      scenario: analysisScenario, // ✅ NOVO: Cenário selecionado
+      scenarioInfo: scenarioMetrics.adjustmentInfo, // ✅ NOVO: Info do ajuste
     };
 
     return `
@@ -205,7 +271,16 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
         .header { text-align: center; margin-bottom: 30px; }
-        .result { font-size: 24px; font-weight: bold; color: ${validation.approved ? "#22c55e" : "#ef4444"}; }
+        .result { font-size: 24px; font-weight: bold; color: ${reportData.validation.approved ? "#22c55e" : "#ef4444"}; }
+        .scenario-badge { 
+            display: inline-block; 
+            background: #3b82f6; 
+            color: white; 
+            padding: 5px 10px; 
+            border-radius: 5px; 
+            font-size: 14px; 
+            margin: 10px 0; 
+        }
         .section { margin-bottom: 25px; }
         .metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
         .metric { border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
@@ -215,6 +290,7 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
         .safe { background-color: #dcfce7; }
         .warning { background-color: #fef3c7; }
         .violation { background-color: #fecaca; }
+        .adjusted { background-color: #dbeafe; }
         .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
     </style>
 </head>
@@ -222,18 +298,26 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
     <div class="header">
         <h1>Relatório de Análise de Operações</h1>
         <h2>Traders House</h2>
-        <div class="result">${validation.approved ? "APROVADO" : "REPROVADO"}</div>
+        <div class="scenario-badge">Cenário ${reportData.scenario}: ${
+          reportData.scenario === 1
+            ? "Análise Completa"
+            : reportData.scenario === 2
+              ? "Limite 30%"
+              : "Remover >35%"
+        }</div>
+        <div class="result">${reportData.validation.approved ? "APROVADO" : "REPROVADO"}</div>
         <p><strong>Cliente:</strong> ${client.name}</p>
         <p><strong>CPF:</strong> ${client.cpf}</p>
         <p><strong>Plano:</strong> ${client.plan}</p>
         <p><strong>Data:</strong> ${reportData.generatedAt}</p>
+        <p><em>Ajuste aplicado: ${reportData.scenarioInfo}</em></p>
     </div>
 
     <div class="section">
-        <h3>Resumo das Métricas</h3>
+        <h3>Resumo das Métricas (Cenário ${reportData.scenario})</h3>
         <div class="metrics">
             <div class="metric">
-                <strong>Dias Operados:</strong> ${metrics.daysOperated}<br>
+                <strong>Dias Considerados:</strong> ${reportData.metrics.daysOperated}<br>
                 <small>Mínimo necessário: 10 dias</small>
             </div>
             <div class="metric">
@@ -245,15 +329,15 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
                 <small>WIN + WDO</small>
             </div>
             <div class="metric">
-                <strong>Resultado Líquido:</strong> ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(metrics.totalNetResult)}<br>
+                <strong>Resultado Líquido:</strong> ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(reportData.metrics.totalNetResult)}<br>
                 <small>Meta: ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(metrics.goalAmount)}</small>
             </div>
             <div class="metric">
-                <strong>% da Meta:</strong> ${((metrics.totalNetResult / metrics.goalAmount) * 100).toFixed(1)}%<br>
+                <strong>% da Meta:</strong> ${((reportData.metrics.totalNetResult / metrics.goalAmount) * 100).toFixed(1)}%<br>
                 <small>Necessário: 100%</small>
             </div>
             <div class="metric">
-                <strong>Violações:</strong> ${violations.length}<br>
+                <strong>Violações:</strong> ${reportData.violations.length}<br>
                 <small>>35% da meta (elimina)</small>
             </div>
         </div>
@@ -262,24 +346,24 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
     <div class="section">
         <h3>Status das Validações</h3>
         <ul>
-            <li><strong>Mínimo 10 dias:</strong> ${validation.minimumDays ? "✅ Aprovado" : "❌ Reprovado"} (${metrics.daysOperated} dias)</li>
-            <li><strong>Meta atingida:</strong> ${validation.totalGoalReached ? "✅ Aprovado" : "❌ Reprovado"} (${((metrics.totalNetResult / metrics.goalAmount) * 100).toFixed(1)}%)</li>
-            <li><strong>Limite diário:</strong> ${validation.dailyLimitRespected ? "✅ Aprovado" : "❌ Reprovado"} (${violations.length} violação${violations.length !== 1 ? "ões" : ""})</li>
+            <li><strong>Mínimo 10 dias:</strong> ${reportData.validation.minimumDays ? "✅ Aprovado" : "❌ Reprovado"} (${reportData.metrics.daysOperated} dias)</li>
+            <li><strong>Meta atingida:</strong> ${reportData.validation.totalGoalReached ? "✅ Aprovado" : "❌ Reprovado"} (${((reportData.metrics.totalNetResult / metrics.goalAmount) * 100).toFixed(1)}%)</li>
+            <li><strong>Limite diário:</strong> ${reportData.validation.dailyLimitRespected ? "✅ Aprovado" : "❌ Reprovado"} (${reportData.violations.length} violação${reportData.violations.length !== 1 ? "ões" : ""})</li>
         </ul>
     </div>
 
     ${
-      warnings.length > 0
+      reportData.warnings.length > 0
         ? `
     <div class="section">
         <h3>Dias de Atenção (30-35% da meta)</h3>
         <table class="table">
             <tr><th>Data</th><th>Resultado Líquido</th><th>% da Meta</th></tr>
-            ${warnings
+            ${reportData.warnings
               .map(
                 (w) => `
             <tr class="warning">
-                <td>${formatDateWithTimezoneCorrection(w.date)}</td>
+                <td>${formatDateForDisplay(w.date)}</td>
                 <td>${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(w.netResult)}</td>
                 <td>${Math.abs(w.percentOfGoal).toFixed(1)}%</td>
             </tr>
@@ -293,17 +377,17 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
     }
 
     ${
-      violations.length > 0
+      reportData.violations.length > 0
         ? `
     <div class="section">
         <h3>Violações Eliminatórias (>35% da meta)</h3>
         <table class="table">
             <tr><th>Data</th><th>Resultado Líquido</th><th>% da Meta</th></tr>
-            ${violations
+            ${reportData.violations
               .map(
                 (v) => `
             <tr class="violation">
-                <td>${new Date(v.date).toLocaleDateString("pt-BR")}</td>
+                <td>${formatDateForDisplay(v.date)}</td>
                 <td>${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v.netResult)}</td>
                 <td>${Math.abs(v.percentOfGoal).toFixed(1)}%</td>
             </tr>
@@ -328,17 +412,17 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
                 <th>% da Meta</th>
                 <th>Status</th>
             </tr>
-            ${metrics.dailyResults
+            ${reportData.metrics.dailyResults
               .map(
                 (day) => `
-            <tr class="${day.riskLevel === "violation" ? "violation" : day.riskLevel === "warning" ? "warning" : "safe"}">
-                <td>${new Date(day.date).toLocaleDateString("pt-BR")}</td>
+            <tr class="${day.adjusted ? "adjusted" : day.riskLevel === "violation" ? "violation" : day.riskLevel === "warning" ? "warning" : "safe"}">
+                <td>${formatDateForDisplay(day.date)}</td>
                 <td>${day.operations}</td>
                 <td>${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(day.result)}</td>
                 <td>${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(day.costs)}</td>
-                <td>${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(day.netResult)}</td>
+                <td>${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(day.netResult)}${day.adjusted ? " 🔧" : ""}</td>
                 <td>${Math.abs(day.percentOfGoal).toFixed(1)}%</td>
-                <td>${day.riskLevel === "violation" ? "❌" : day.riskLevel === "warning" ? "⚠️" : "✅"}</td>
+                <td>${day.riskLevel === "violation" ? "❌" : day.riskLevel === "warning" ? "⚠️" : "✅"}${day.adjusted ? " (Ajustado)" : ""}</td>
             </tr>
             `
               )
@@ -348,6 +432,7 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
 
     <div class="footer">
         <p>Relatório gerado automaticamente pelo Sistema de Análise de Operações - Traders House</p>
+        <p>Cenário ${reportData.scenario} aplicado: ${reportData.scenarioInfo}</p>
         <p>Data de geração: ${reportData.generatedAt}</p>
     </div>
 </body>
@@ -356,20 +441,37 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
   };
 
   const downloadPDF = (htmlContent: string, filename: string) => {
-    // Criar um blob com o HTML
-    const blob = new Blob([htmlContent], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
+    // Criar uma nova janela/iframe para renderizar o HTML
+    const printWindow = window.open("", "_blank");
 
-    // Criar link temporário para download
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename.replace(".pdf", ".html"); // Download como HTML por simplicidade
-    document.body.appendChild(link);
-    link.click();
+    if (printWindow) {
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
 
-    // Limpar
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+      // Aguardar o carregamento e disparar a impressão
+      printWindow.onload = () => {
+        printWindow.focus();
+        printWindow.print();
+
+        // Fechar a janela após um pequeno delay
+        setTimeout(() => {
+          printWindow.close();
+        }, 100);
+      };
+    } else {
+      // Fallback: Download como HTML se popup for bloqueado
+      const blob = new Blob([htmlContent], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename.replace(".pdf", ".html");
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
   };
 
   return (
@@ -655,7 +757,7 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
               <div>
                 <p className="text-sm text-zinc-400">Violações</p>
                 <p className="text-2xl font-bold text-zinc-100">
-                  {violations.length}
+                  {scenarioMetrics.violations.length}
                 </p>
                 <p className="text-xs text-zinc-500">
                   {">"}35% da meta (elimina)
@@ -672,7 +774,7 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
               <div>
                 <p className="text-sm text-zinc-400">Avisos</p>
                 <p className="text-2xl font-bold text-zinc-100">
-                  {warnings.length}
+                  {scenarioMetrics.warnings.length}
                 </p>
                 <p className="text-xs text-zinc-500">
                   30-35% da meta (atenção)
@@ -735,7 +837,7 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
 
           <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-lg">
             <div className="flex items-center space-x-3">
-              {validation.dailyLimitRespected ? (
+              {scenarioMetrics.validation.dailyLimitRespected ? (
                 <CheckCircle className="h-5 w-5 text-green-500" />
               ) : (
                 <XCircle className="h-5 w-5 text-red-500" />
@@ -747,17 +849,19 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
             <div className="flex items-center space-x-2">
               <Badge
                 variant={
-                  validation.dailyLimitRespected ? "default" : "destructive"
+                  scenarioMetrics.validation.dailyLimitRespected
+                    ? "default"
+                    : "destructive"
                 }
               >
-                {violations.length} violação(ões)
+                {scenarioMetrics.violations.length} violação(ões)
               </Badge>
-              {warnings.length > 0 && (
+              {scenarioMetrics.warnings.length > 0 && (
                 <Badge
                   variant="outline"
                   className="border-yellow-500 text-yellow-500"
                 >
-                  {warnings.length} aviso(s)
+                  {scenarioMetrics.warnings.length} aviso(s)
                 </Badge>
               )}
             </div>
@@ -766,7 +870,7 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
       </Card>
 
       {/* Violações (se houver) */}
-      {violations.length > 0 && (
+      {scenarioMetrics.violations.length > 0 && (
         <Card className="bg-red-500/5 border-red-500/20">
           <CardHeader>
             <CardTitle className="text-red-400 flex items-center">
@@ -776,18 +880,14 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {violations.map((violation, index) => (
+              {scenarioMetrics.violations.map((violation, index) => (
                 <div
                   key={index}
                   className="flex items-center justify-between p-3 bg-red-500/10 rounded-lg border border-red-500/20"
                 >
                   <div>
                     <p className="text-zinc-200 font-medium">
-                      {format(
-                        new Date(violation.date),
-                        "dd 'de' MMMM 'de' yyyy",
-                        { locale: ptBR }
-                      )}
+                      {formatDateForDisplay(violation.date)}
                     </p>
                     <p className="text-sm text-zinc-400">
                       Resultado bruto: {formatCurrency(violation.result)} |
@@ -813,7 +913,7 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
       )}
 
       {/* Avisos (se houver) */}
-      {warnings.length > 0 && (
+      {scenarioMetrics.warnings.length > 0 && (
         <Card className="bg-yellow-500/5 border-yellow-500/20">
           <CardHeader>
             <CardTitle className="text-yellow-400 flex items-center">
@@ -823,18 +923,14 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {warnings.map((warning, index) => (
+              {scenarioMetrics.warnings.map((warning, index) => (
                 <div
                   key={index}
                   className="flex items-center justify-between p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/20"
                 >
                   <div>
                     <p className="text-zinc-200 font-medium">
-                      {format(
-                        new Date(warning.date),
-                        "dd 'de' MMMM 'de' yyyy",
-                        { locale: ptBR }
-                      )}
+                      {formatDateForDisplay(warning.date)}
                     </p>
                     <p className="text-sm text-zinc-400">
                       Resultado bruto: {formatCurrency(warning.result)} |
@@ -892,9 +988,7 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
                   >
                     <div>
                       <p className="text-zinc-200 font-medium">
-                        {format(new Date(day.date), "dd/MM/yyyy", {
-                          locale: ptBR,
-                        })}
+                        {formatDateForDisplay(day.date)}
                       </p>
                       <p className="text-sm text-zinc-400">
                         {day.operations} operação(ões) | Custos:{" "}
