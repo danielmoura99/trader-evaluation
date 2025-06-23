@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { OperationsUpload } from "./_components/operations-upload";
 import { AnalysisResults } from "./_components/analysis-results";
 import { ClientInfo } from "./_components/client-info";
+import { EvaluationSelector } from "./_components/evaluation-selector";
 
 interface Client {
   id: string;
@@ -17,6 +18,20 @@ interface Client {
   cpf: string;
   plan: string;
   platform: string;
+}
+
+// ✅ NOVA INTERFACE: Para múltiplas avaliações
+interface Evaluation {
+  id: string;
+  name: string;
+  cpf: string;
+  plan: string;
+  platform: string;
+  status: string;
+  startDate: Date | null;
+  endDate: Date | null;
+  source: "evaluation" | "mgc" | "paid";
+  displayName: string;
 }
 
 interface AnalysisResult {
@@ -73,6 +88,11 @@ export default function OperationsAnalystPage() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(
     null
   );
+
+  // ✅ NOVOS ESTADOS: Para sistema de múltiplas avaliações
+  const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
+  const [showEvaluationSelector, setShowEvaluationSelector] = useState(false);
+
   const { toast } = useToast();
 
   const searchClient = useCallback(async () => {
@@ -93,11 +113,40 @@ export default function OperationsAnalystPage() {
       const data = await response.json();
 
       if (data.success) {
-        setClient(data.client);
-        toast({
-          title: "Cliente encontrado",
-          description: `${data.client.name} - ${data.client.plan}`,
-        });
+        // ✅ LÓGICA ATUALIZADA: Verificar se há múltiplas avaliações
+        if (data.multiple) {
+          // MÚLTIPLAS AVALIAÇÕES: Mostrar dialog de seleção
+          setEvaluations(data.evaluations);
+          setShowEvaluationSelector(true);
+          toast({
+            title: "Múltiplas avaliações encontradas",
+            description: `${data.evaluations.length} avaliação(ões) encontrada(s). Selecione uma para continuar.`,
+          });
+        } else {
+          // ÚNICA AVALIAÇÃO: Continuar com lógica original
+          if (data.client) {
+            // API retornando formato antigo (compatibilidade)
+            setClient(data.client);
+            toast({
+              title: "Cliente encontrado",
+              description: `${data.client.name} - ${data.client.plan}`,
+            });
+          } else if (data.evaluations && data.evaluations.length > 0) {
+            // API retornando formato novo com 1 avaliação
+            const evaluation = data.evaluations[0];
+            setClient({
+              id: evaluation.id,
+              name: evaluation.name,
+              cpf: evaluation.cpf,
+              plan: evaluation.plan,
+              platform: evaluation.platform,
+            });
+            toast({
+              title: "Cliente encontrado",
+              description: `${evaluation.name} - ${evaluation.plan}`,
+            });
+          }
+        }
       } else {
         setClient(null);
         toast({
@@ -109,8 +158,8 @@ export default function OperationsAnalystPage() {
     } catch (error) {
       console.error("Erro ao buscar cliente:", error);
       toast({
-        title: "Erro",
-        description: "Erro ao buscar cliente. Tente novamente.",
+        title: "Erro na busca",
+        description: "Ocorreu um erro ao buscar o cliente.",
         variant: "destructive",
       });
     } finally {
@@ -118,51 +167,86 @@ export default function OperationsAnalystPage() {
     }
   }, [cpf, toast]);
 
-  const handleAnalysisComplete = useCallback(
-    (result: AnalysisResult) => {
-      setAnalysisResult(result);
-      toast({
-        title: "Análise concluída",
-        description: `Resultado: ${result.validation.approved ? "APROVADO" : "REPROVADO"}`,
-        variant: result.validation.approved ? "default" : "destructive",
-      });
-    },
-    [toast]
-  );
+  // ✅ NOVA FUNÇÃO: Handler para seleção de avaliação
+  const handleEvaluationSelect = (evaluation: Evaluation) => {
+    setClient({
+      id: evaluation.id,
+      name: evaluation.name,
+      cpf: evaluation.cpf,
+      plan: evaluation.plan,
+      platform: evaluation.platform,
+    });
+    setShowEvaluationSelector(false);
+    setEvaluations([]); // Limpar avaliações
+    toast({
+      title: "Avaliação selecionada",
+      description: `${evaluation.name} - ${evaluation.plan}`,
+    });
+  };
 
-  const resetAnalysis = useCallback(() => {
-    setCpf("");
-    setClient(null);
-    setAnalysisResult(null);
+  const handleAnalysisComplete = useCallback((result: AnalysisResult) => {
+    setAnalysisResult(result);
   }, []);
 
+  // ✅ FUNÇÃO RESET ATUALIZADA: Limpar novos estados
+  const resetAnalysis = () => {
+    setClient(null);
+    setAnalysisResult(null);
+    setCpf("");
+    setEvaluations([]);
+    setShowEvaluationSelector(false);
+  };
+
+  const formatCPF = (value: string) => {
+    const digits = value.replace(/\D/g, "");
+    return digits
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})/, "$1-$2")
+      .replace(/(-\d{2})\d+?$/, "$1");
+  };
+
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between mb-6">
+    <div className="container mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-zinc-100">
-            Analista de Operações
+            Operations Analyst
           </h1>
           <p className="text-zinc-400 mt-1">
-            Analise as operações de um cliente e verifique se atingiu as metas
-            estabelecidas
+            Análise avançada de performance de traders
           </p>
         </div>
-
         {analysisResult && (
           <Button
             onClick={resetAnalysis}
             variant="outline"
             className="bg-zinc-800 border-zinc-700 hover:bg-zinc-700"
           >
-            <FileText className="mr-2 h-4 w-4" />
             Nova Análise
           </Button>
         )}
       </div>
 
-      {!analysisResult ? (
-        <div className="grid gap-6">
+      {/* ✅ DIALOG de Seleção de Avaliações */}
+      {showEvaluationSelector && (
+        <EvaluationSelector
+          isOpen={showEvaluationSelector}
+          evaluations={evaluations}
+          onSelect={handleEvaluationSelect}
+          onClose={() => {
+            setShowEvaluationSelector(false);
+            setEvaluations([]);
+          }}
+        />
+      )}
+
+      {/* Resultados da Análise */}
+      {analysisResult ? (
+        <AnalysisResults result={analysisResult} />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Busca de Cliente */}
           <Card className="bg-zinc-900 border-zinc-800">
             <CardHeader>
@@ -172,24 +256,22 @@ export default function OperationsAnalystPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <Label htmlFor="cpf" className="text-zinc-200">
-                    CPF do Cliente
-                  </Label>
+              <div className="space-y-2">
+                <Label htmlFor="cpf" className="text-zinc-200">
+                  CPF do Cliente
+                </Label>
+                <div className="flex space-x-2">
                   <Input
                     id="cpf"
-                    placeholder="000.000.000-00"
                     value={cpf}
-                    onChange={(e) => setCpf(e.target.value)}
-                    className="bg-zinc-800 border-zinc-700 mt-1"
-                    disabled={isSearching}
+                    onChange={(e) => setCpf(formatCPF(e.target.value))}
+                    placeholder="000.000.000-00"
+                    maxLength={14}
+                    className="bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500"
                   />
-                </div>
-                <div className="flex items-end">
                   <Button
                     onClick={searchClient}
-                    disabled={isSearching || !cpf}
+                    disabled={isSearching || cpf.length < 14}
                     className="bg-blue-600 hover:bg-blue-700"
                   >
                     {isSearching ? "Buscando..." : "Buscar"}
@@ -237,54 +319,61 @@ export default function OperationsAnalystPage() {
                     key={plan}
                     className={`p-4 rounded-lg border ${
                       client?.plan === plan
-                        ? "bg-blue-500/10 border-blue-500/30"
-                        : "bg-zinc-800/50 border-zinc-700"
+                        ? "border-blue-500 bg-blue-500/10"
+                        : "border-zinc-700"
                     }`}
                   >
-                    <div className="font-medium text-zinc-200">{plan}</div>
-                    <div className="text-lg font-bold text-green-400">
-                      R$ {goal.toLocaleString("pt-BR")}
-                    </div>
+                    <p className="text-sm font-medium text-zinc-200">{plan}</p>
+                    <p className="text-lg font-bold text-zinc-100">
+                      R$ {goal.toLocaleString()}
+                    </p>
+                    <p className="text-xs text-zinc-400">Meta total</p>
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
 
-              <div className="mt-6 p-4 bg-zinc-800/50 rounded-lg">
-                <h4 className="font-medium text-zinc-200 mb-2">
-                  Regras de Aprovação:
-                </h4>
-                <ul className="text-sm text-zinc-400 space-y-1">
-                  <li>• Mínimo de 10 dias de operação</li>
-                  <li>
-                    • <span className="text-green-400">≤30% da meta:</span>{" "}
-                    Seguro ✅
-                  </li>
-                  <li>
-                    • <span className="text-yellow-400">30-35% da meta:</span>{" "}
-                    Atenção ⚠️ (não elimina)
-                  </li>
-                  <li>
-                    • <span className="text-red-400">{">"}35% da meta:</span>{" "}
-                    Violação ❌ (elimina)
-                  </li>
-                  <li>
-                    • Resultado total líquido deve ser maior ou igual à meta
-                  </li>
-                  <li className="mt-2 pt-2 border-t border-zinc-700">
-                    <strong className="text-zinc-300">
-                      Custos de operação:
-                    </strong>
-                  </li>
-                  <li>• WIN (qualquer vencimento): R$ 1,36 por contrato</li>
-                  <li>• WDO (qualquer vencimento): R$ 2,78 por contrato</li>
-                </ul>
+          {/* Informações Gerais */}
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardHeader>
+              <CardTitle className="text-zinc-100 flex items-center">
+                <FileText className="mr-2 h-5 w-5" />
+                Como Funciona
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                <div>
+                  <p className="text-zinc-200 font-medium">Busca Inteligente</p>
+                  <p className="text-sm text-zinc-400">
+                    Localiza automaticamente o cliente em todas as bases de
+                    dados
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                <div>
+                  <p className="text-zinc-200 font-medium">Upload Simples</p>
+                  <p className="text-sm text-zinc-400">
+                    Faça upload do arquivo CSV das operações do trader
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
+                <div>
+                  <p className="text-zinc-200 font-medium">Análise Completa</p>
+                  <p className="text-sm text-zinc-400">
+                    3 cenários de validação com relatórios detalhados
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
-      ) : (
-        /* Resultados da Análise */
-        <AnalysisResults result={analysisResult} />
       )}
     </div>
   );
