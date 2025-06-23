@@ -217,7 +217,7 @@ export default function OperationsAnalystPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-zinc-100">
-            Operations Analyst
+            Análista de Operações
           </h1>
           <p className="text-zinc-400 mt-1">
             Análise avançada de performance de traders
