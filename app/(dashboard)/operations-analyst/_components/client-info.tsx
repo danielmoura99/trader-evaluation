@@ -29,6 +29,16 @@ export function ClientInfo({ client }: ClientInfoProps) {
         return "bg-purple-500/10 text-purple-500 border-purple-500/20";
       case "TC - 500K":
         return "bg-orange-500/10 text-orange-500 border-orange-500/20";
+      case "TC DIRETO - 5":
+        return "bg-cyan-500/10 text-cyan-500 border-cyan-500/20";
+      case "TC DIRETO - 10":
+        return "bg-indigo-500/10 text-indigo-500 border-indigo-500/20";
+      case "TC DIRETO - 20":
+        return "bg-pink-500/10 text-pink-500 border-pink-500/20";
+      case "TC DIRETO - 25":
+        return "bg-rose-500/10 text-rose-500 border-rose-500/20";
+      case "TC - MGT":
+        return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
       default:
         return "bg-zinc-500/10 text-zinc-500 border-zinc-500/20";
     }

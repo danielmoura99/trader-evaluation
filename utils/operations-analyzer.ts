@@ -7,6 +7,11 @@ export const PLAN_GOALS = {
   "TC - 100K": 2000,
   "TC - 250K": 4200,
   "TC - 500K": 9000,
+  "TC DIRETO - 5": 1000,
+  "TC DIRETO - 10": 2200,
+  "TC DIRETO - 20": 3800,
+  "TC DIRETO - 25": 5200,
+  "TC - MGT": 3000,
 } as const;
 
 // Custos por contrato

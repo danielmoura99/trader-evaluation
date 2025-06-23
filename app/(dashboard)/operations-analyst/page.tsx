@@ -79,6 +79,11 @@ const PLAN_GOALS = {
   "TC - 100K": 2000,
   "TC - 250K": 4200,
   "TC - 500K": 9000,
+  "TC DIRETO - 5": 1000,
+  "TC DIRETO - 10": 2200,
+  "TC DIRETO - 20": 3800,
+  "TC DIRETO - 25": 5200,
+  "TC - MGT": 3000,
 } as const;
 
 export default function OperationsAnalystPage() {
@@ -207,11 +212,11 @@ export default function OperationsAnalystPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="w-full max-w-none p-4 md:p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-zinc-100">
+          <h1 className="text-2xl md:text-3xl font-bold text-zinc-100">
             Operations Analyst
           </h1>
           <p className="text-zinc-400 mt-1">
@@ -222,7 +227,7 @@ export default function OperationsAnalystPage() {
           <Button
             onClick={resetAnalysis}
             variant="outline"
-            className="bg-zinc-800 border-zinc-700 hover:bg-zinc-700"
+            className="bg-zinc-800 border-zinc-700 hover:bg-zinc-700 w-full sm:w-auto"
           >
             Nova Análise
           </Button>
@@ -246,7 +251,7 @@ export default function OperationsAnalystPage() {
       {analysisResult ? (
         <AnalysisResults result={analysisResult} />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
           {/* Busca de Cliente */}
           <Card className="bg-zinc-900 border-zinc-800">
             <CardHeader>
@@ -260,19 +265,19 @@ export default function OperationsAnalystPage() {
                 <Label htmlFor="cpf" className="text-zinc-200">
                   CPF do Cliente
                 </Label>
-                <div className="flex space-x-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Input
                     id="cpf"
                     value={cpf}
                     onChange={(e) => setCpf(formatCPF(e.target.value))}
                     placeholder="000.000.000-00"
                     maxLength={14}
-                    className="bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500"
+                    className="bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500 flex-1"
                   />
                   <Button
                     onClick={searchClient}
                     disabled={isSearching || cpf.length < 14}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
                   >
                     {isSearching ? "Buscando..." : "Buscar"}
                   </Button>
@@ -313,18 +318,20 @@ export default function OperationsAnalystPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
                 {Object.entries(PLAN_GOALS).map(([plan, goal]) => (
                   <div
                     key={plan}
-                    className={`p-4 rounded-lg border ${
+                    className={`p-3 rounded-lg border ${
                       client?.plan === plan
                         ? "border-blue-500 bg-blue-500/10"
                         : "border-zinc-700"
                     }`}
                   >
-                    <p className="text-sm font-medium text-zinc-200">{plan}</p>
-                    <p className="text-lg font-bold text-zinc-100">
+                    <p className="text-xs md:text-sm font-medium text-zinc-200 truncate">
+                      {plan}
+                    </p>
+                    <p className="text-sm md:text-lg font-bold text-zinc-100">
                       R$ {goal.toLocaleString()}
                     </p>
                     <p className="text-xs text-zinc-400">Meta total</p>
@@ -344,7 +351,7 @@ export default function OperationsAnalystPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                 <div>
                   <p className="text-zinc-200 font-medium">Busca Inteligente</p>
                   <p className="text-sm text-zinc-400">
@@ -354,7 +361,7 @@ export default function OperationsAnalystPage() {
                 </div>
               </div>
               <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
                 <div>
                   <p className="text-zinc-200 font-medium">Upload Simples</p>
                   <p className="text-sm text-zinc-400">
@@ -363,7 +370,7 @@ export default function OperationsAnalystPage() {
                 </div>
               </div>
               <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
+                <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
                 <div>
                   <p className="text-zinc-200 font-medium">Análise Completa</p>
                   <p className="text-sm text-zinc-400">
