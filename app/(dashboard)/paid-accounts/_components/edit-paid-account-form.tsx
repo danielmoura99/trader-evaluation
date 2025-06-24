@@ -20,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PaidAccountStatus } from "@/app/types";
+import { Textarea } from "@/components/ui/textarea";
 
 // ✅ Schema expandido para incluir todos os campos editáveis
 const editPaidAccountSchema = z.object({
@@ -36,6 +37,7 @@ const editPaidAccountSchema = z.object({
   clientName: z.string().min(1, "Nome é obrigatório"),
   clientEmail: z.string().email("E-mail inválido"),
   clientStartDate: z.date().nullable().optional(), // Data de início escolhida pelo cliente
+  clientObservation: z.string().optional(),
 });
 
 type EditPaidAccountForm = z.infer<typeof editPaidAccountSchema>;
@@ -53,6 +55,7 @@ interface EditPaidAccountFormProps {
     clientName: string;
     clientEmail: string;
     clientStartDate?: Date | null;
+    clientObservation?: string | null;
   };
   onSubmit: (data: EditPaidAccountForm) => void;
   onCancel: () => void;
@@ -74,6 +77,7 @@ export function EditPaidAccountForm({
       clientName: initialData.clientName,
       clientEmail: initialData.clientEmail,
       clientStartDate: initialData.clientStartDate,
+      clientObservation: initialData.clientObservation || "",
     },
   });
 
@@ -141,6 +145,24 @@ export function EditPaidAccountForm({
                         e.target.value ? new Date(e.target.value) : null
                       )
                     }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {/* ✅ NOVO: Campo Observação */}
+          <FormField
+            control={form.control}
+            name="clientObservation"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Observação</FormLabel>
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    placeholder="Observações sobre o cliente..."
+                    className="min-h-[80px] resize-y"
                   />
                 </FormControl>
                 <FormMessage />

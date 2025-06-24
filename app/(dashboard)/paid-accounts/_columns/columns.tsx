@@ -4,6 +4,11 @@ import { PaidAccount } from "@/app/types";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PaidAccountButtons } from "../_components/paid-platform-button";
+import {
+  calculateDaysToExpire,
+  getDaysToExpireColor,
+  formatDaysToExpire,
+} from "@/utils/paid-accounts-helper";
 
 export const columns: ColumnDef<
   PaidAccount & {
@@ -12,7 +17,8 @@ export const columns: ColumnDef<
       email: string;
       cpf: string;
       birthDate: Date;
-      startDate: Date | null; // ✅ ADICIONADO: Data de início do cliente
+      startDate: Date | null;
+      observation: string | null;
     };
   }
 >[] = [
@@ -43,7 +49,6 @@ export const columns: ColumnDef<
       return <span className={`font-medium ${color}`}>{status}</span>;
     },
   },
-  // ✅ NOVA COLUNA: Data de Início (do formulário do cliente)
   {
     accessorKey: "client.startDate",
     header: "Data de Início",
@@ -87,6 +92,49 @@ export const columns: ColumnDef<
       const adjustedDate = new Date(dateObj.getTime() + offset * 60 * 1000);
 
       return format(adjustedDate, "dd/MM/yyyy", { locale: ptBR });
+    },
+  },
+  {
+    accessorKey: "client.observation",
+    header: "Observação",
+    cell: ({ row }) => {
+      const observation = row.original.client.observation;
+      if (!observation) return "-";
+
+      // Truncar observação longa para exibição na tabela
+      const truncated =
+        observation.length > 50
+          ? `${observation.substring(0, 50)}...`
+          : observation;
+
+      return (
+        <span
+          className="text-zinc-300 cursor-help"
+          title={observation} // Tooltip com texto completo
+        >
+          {truncated}
+        </span>
+      );
+    },
+  },
+  {
+    accessorKey: "daysToExpire",
+    header: "Dias a Vencer",
+    cell: ({ row }) => {
+      const startDate = row.original.startDate; // Data de ativação
+      const status = row.original.status;
+
+      // Só calcular para contas ativas
+      if (status !== "Ativo" || !startDate) {
+        return <span className="text-zinc-500">-</span>;
+      }
+
+      // Usar utilitários para cálculos
+      const daysToExpire = calculateDaysToExpire(startDate, 30);
+      const colorClass = getDaysToExpireColor(daysToExpire);
+      const formattedText = formatDaysToExpire(daysToExpire);
+
+      return <span className={colorClass}>{formattedText}</span>;
     },
   },
   {

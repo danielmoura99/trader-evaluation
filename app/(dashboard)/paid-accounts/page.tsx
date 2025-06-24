@@ -25,7 +25,8 @@ declare global {
           email: string;
           cpf: string;
           birthDate: Date;
-          startDate: Date | null; // ✅ Incluindo startDate do cliente
+          startDate: Date | null;
+          observation: string | null;
         };
       }
     ) => void;
@@ -40,7 +41,8 @@ function PaidAccountsContent() {
         email: string;
         cpf: string;
         birthDate: Date;
-        startDate: Date | null; // ✅ Incluindo startDate do cliente
+        startDate: Date | null;
+        observation: string | null;
       };
     })[]
   >([]);
@@ -52,6 +54,7 @@ function PaidAccountsContent() {
           cpf: string;
           birthDate: Date;
           startDate: Date | null;
+          observation: string | null;
         };
       })
     | null
@@ -70,6 +73,7 @@ function PaidAccountsContent() {
             cpf: string;
             birthDate: Date;
             startDate: Date | null;
+            observation: string | null;
           };
         })[]
       );
@@ -109,6 +113,7 @@ function PaidAccountsContent() {
     clientName: string;
     clientEmail: string;
     clientStartDate?: Date | null;
+    clientObservation?: string;
   }) => {
     try {
       if (editingAccount) {
@@ -160,6 +165,7 @@ function PaidAccountsContent() {
                 clientName: editingAccount.client.name,
                 clientEmail: editingAccount.client.email,
                 clientStartDate: editingAccount.client.startDate,
+                clientObservation: editingAccount.client.observation,
               }}
               onSubmit={handleEditSubmit}
               onCancel={() => setEditModalOpen(false)}

@@ -17,6 +17,8 @@ interface PaidAccountButtonsProps {
       email: string;
       cpf: string;
       birthDate: Date;
+      startDate: Date | null;
+      observation: string | null;
     };
   };
 }
