@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 const PLAN_GOALS = {
   "TC - 50K": 1000,
-  "TC - 100K": 2000,
+  "TC - 100K": 1900,
   "TC - 250K": 4200,
   "TC - 500K": 9000,
   "TC DIRETO - 5": 1000,
