@@ -47,7 +47,7 @@ export async function startEvaluation(clientId: string) {
     endDate.setDate(endDate.getDate() + 30);
   } else {
     // Para todos os outros planos: 60 dias (padrão atual)
-    endDate.setDate(endDate.getDate() + 60);
+    endDate.setDate(endDate.getDate() + 30);
   }
 
   await prisma.client.update({
