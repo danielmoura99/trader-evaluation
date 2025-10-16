@@ -302,6 +302,10 @@ export function ClientForm({
                       <SelectItem value="TC - 100K">TC - 100K</SelectItem>
                       <SelectItem value="TC - 250K">TC - 250K</SelectItem>
                       <SelectItem value="TC - 500K">TC - 500K</SelectItem>
+                      <SelectItem value="TC DIRETO - 5">TC DIRETO - 5</SelectItem>
+                      <SelectItem value="TC DIRETO - 10">TC DIRETO - 10</SelectItem>
+                      <SelectItem value="TC DIRETO - 20">TC DIRETO - 20</SelectItem>
+                      <SelectItem value="TC DIRETO - 25">TC DIRETO - 25</SelectItem>
                       <SelectItem value="Trader Estrategista">
                         Trader Estrategista
                       </SelectItem>
