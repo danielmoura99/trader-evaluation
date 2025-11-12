@@ -104,6 +104,7 @@ export function processPlanName(description: string): string {
   // "Trader DIRETO 5 - Profit One | THP" → "TC DIRETO - 5"
   // "Trader DIRETO 10 - Profit One | THP" → "TC DIRETO - 10"
   // "Trader 100K - Profit One | THP" → "TC - 100K"
+  // "Black 1M | THP" → "Black 1M"
 
   console.log("[processPlanName] Descrição original:", description);
 
@@ -120,10 +121,19 @@ export function processPlanName(description: string): string {
   } else if (isMGT) {
     processedPlan = `TC - MGT`;
   } else {
-    // ✅ Para planos normais: extrair valor com K (100K, 250K, etc.)
-    const normalMatch = description.match(/(\d+K)/i);
-    const planValue = normalMatch ? normalMatch[1].toUpperCase() : "50K"; // Default
-    processedPlan = `TC - ${planValue}`;
+    // ✅ Primeiro: tentar extrair planos especiais (Black, Platinum, etc.)
+    // Formato: "Black 1M | THP" ou "Platinum 500K | THP"
+    const specialPlanMatch = description.match(/^([A-Za-z]+\s+\d+[MK])/i);
+
+    if (specialPlanMatch) {
+      // ✅ Plano especial encontrado - usar o nome completo
+      processedPlan = specialPlanMatch[1].trim();
+    } else {
+      // ✅ Para planos normais: extrair valor com K (100K, 250K, etc.)
+      const normalMatch = description.match(/(\d+K)/i);
+      const planValue = normalMatch ? normalMatch[1].toUpperCase() : "50K"; // Default
+      processedPlan = `TC - ${planValue}`;
+    }
   }
 
   console.log("[processPlanName] Plano processado:", processedPlan);
