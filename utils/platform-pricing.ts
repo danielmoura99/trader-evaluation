@@ -8,6 +8,7 @@
 export const PLATFORM_PRICES = {
   "Profit One": 9850, // R$ 98,50
   "Profit Pro": 22600, // R$ 226,00
+  "Profit Teste": 1000, // R$ 10,00 (para testes)
 } as const;
 
 /**
