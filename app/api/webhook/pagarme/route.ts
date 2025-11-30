@@ -22,6 +22,18 @@ export async function POST(req: NextRequest) {
       return Response.json({ message: "Evento ignorado" });
     }
 
+    // ✅ FILTRO: Ignorar webhooks de RENOVAÇÃO DE PLATAFORMA
+    const metadata = webhookData.data?.metadata;
+    if (metadata?.type === "platform_renewal" || metadata?.service === "platform_renewal") {
+      console.log(
+        "[Pagar.me Webhook] ⚠️ Renovação de plataforma detectada - Ignorando (será processado por /api/webhook/pagarme-platform-renewal)"
+      );
+      return Response.json({
+        message: "Renovação de plataforma - webhook ignorado",
+        info: "Este webhook será processado pelo endpoint de renovações",
+      });
+    }
+
     // Extrair dados do webhook
     const webhookService = new PagarmeWebhookService();
     const paymentData = webhookService.extractPaymentData(webhookData);
