@@ -97,6 +97,28 @@ export const columns: ColumnDef<Client>[] = [
     },
   },
   {
+    accessorKey: "platformStartDate",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Data Plataforma
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => {
+      const date = row.getValue("platformStartDate");
+      if (!date) return "-";
+
+      const dateObj = new Date(date as string);
+      const offset = dateObj.getTimezoneOffset();
+      const adjustedDate = new Date(dateObj.getTime() + offset * 60 * 1000);
+
+      return format(adjustedDate, "dd/MM/yyyy", { locale: ptBR });
+    },
+  },
+  {
     accessorKey: "observation",
     header: "Observação",
   },

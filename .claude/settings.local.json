@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Read(//e/client-portal/**)"
     ],
     "deny": [],
     "ask": []

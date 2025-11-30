@@ -70,6 +70,51 @@ export const columns: ColumnDef<Client>[] = [
     },
   },
   {
+    accessorKey: "platformStartDate",
+    header: "Data Plataforma",
+    cell: ({ row }) => {
+      const date = row.getValue("platformStartDate");
+      if (!date) return "-";
+
+      const dateObj = new Date(date as string);
+      const offset = dateObj.getTimezoneOffset();
+      const adjustedDate = new Date(dateObj.getTime() + offset * 60 * 1000);
+
+      return format(adjustedDate, "dd/MM/yyyy", { locale: ptBR });
+    },
+  },
+  {
+    id: "platformDaysLeft",
+    header: "Dias a Vencer Plataforma",
+    cell: ({ row }) => {
+      const platformStartDate = row.original.platformStartDate;
+      if (!platformStartDate) return "-";
+
+      // Calcular data de vencimento da plataforma (30 dias desde platformStartDate)
+      const platformEndDate = new Date(platformStartDate);
+      platformEndDate.setDate(platformEndDate.getDate() + 30);
+
+      const daysLeft = differenceInDays(platformEndDate, new Date());
+
+      // Cores baseadas nos dias restantes
+      const color =
+        daysLeft <= 0
+          ? "text-red-600 font-bold"
+          : daysLeft <= 3
+            ? "text-red-500 font-medium"
+            : daysLeft <= 7
+              ? "text-yellow-500"
+              : "text-green-500";
+
+      const text =
+        daysLeft <= 0
+          ? `Vencido (${Math.abs(daysLeft)} dias)`
+          : `${daysLeft + 1} dias`;
+
+      return <span className={color}>{text}</span>;
+    },
+  },
+  {
     id: "actions",
     cell: ({ row }) => {
       const client = row.original;

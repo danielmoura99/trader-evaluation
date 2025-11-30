@@ -39,7 +39,7 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
-    "/api/client-portal/:path*",
+    // Exclui: api/client-portal, api/client-evaluations, api/webhook (públicos), _next/static, _next/image, favicon.ico
+    "/((?!api/client-portal|api/client-evaluations|api/webhook|_next/static|_next/image|favicon.ico).*)",
   ],
 };

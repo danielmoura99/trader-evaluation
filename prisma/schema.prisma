@@ -8,25 +8,30 @@ datasource db {
 }
 
 model Client {
-  id               String       @id @default(cuid())
-  name             String
-  cpf              String
-  phone            String
-  birthDate        DateTime
-  address          String?
-  zipCode          String?
-  email            String
-  platform         String
-  plan             String
-  traderStatus     String
-  startDate        DateTime?
-  endDate          DateTime?
-  observation      String?
-  cancellationDate DateTime?
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
-  contacts         Contact[]
-  paidAccount      PaidAccount?
+  id                 String             @id @default(cuid())
+  name               String
+  cpf                String
+  phone              String
+  birthDate          DateTime
+  address            String?
+  zipCode            String?
+  email              String
+  platform           String
+  plan               String
+  traderStatus       String
+  startDate          DateTime?
+  endDate            DateTime?
+  observation        String?
+  cancellationDate   DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  autoRenewalEnabled Boolean            @default(false)
+  lastRenewalDate    DateTime?
+  renewalPaymentId   String?
+  platformStartDate  DateTime?
+  contacts           Contact[]
+  paidAccount        PaidAccount?
+  platformRenewals   PlatformRenewal[]
 
   @@map("clients")
 }
@@ -75,20 +80,21 @@ model Payment {
 }
 
 model PaidAccount {
-  id                 String           @id @default(cuid())
-  clientId           String           @unique
+  id                 String              @id @default(cuid())
+  clientId           String              @unique
   platform           String
   plan               String
   status             String
   startDate          DateTime?
   endDate            DateTime?
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-  autoRenewalEnabled Boolean          @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  autoRenewalEnabled Boolean             @default(true)
   lastRenewalDate    DateTime?
   renewalPaymentId   String?
   renewals           AccountRenewal[]
-  client             Client           @relation(fields: [clientId], references: [id])
+  platformRenewals   PlatformRenewal[]
+  client             Client              @relation(fields: [clientId], references: [id])
 
   @@map("paid_accounts")
 }
@@ -127,4 +133,24 @@ model AccountRenewal {
   paidAccount   PaidAccount @relation(fields: [paidAccountId], references: [id])
 
   @@map("account_renewals")
+}
+
+model PlatformRenewal {
+  id            String       @id @default(cuid())
+  clientId      String?
+  paidAccountId String?
+  renewalType   String
+  paymentId     String
+  renewalDate   DateTime
+  amount        Int
+  platform      String
+  status        String
+  pixCode       String?
+  pixExpiresAt  DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  client        Client?      @relation(fields: [clientId], references: [id])
+  paidAccount   PaidAccount? @relation(fields: [paidAccountId], references: [id])
+
+  @@map("platform_renewals")
 }

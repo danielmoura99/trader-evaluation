@@ -56,6 +56,7 @@ export async function startEvaluation(clientId: string) {
       traderStatus: TraderStatus.IN_PROGRESS,
       startDate,
       endDate,
+      platformStartDate: startDate, // ← NOVO: Ativa plataforma junto com avaliação
     },
   });
   revalidatePath("/evaluations");
