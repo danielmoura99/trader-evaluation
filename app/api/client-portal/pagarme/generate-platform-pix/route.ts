@@ -81,35 +81,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verificar se já existe renovação pendente
-    const existingRenewal = await prisma.platformRenewal.findFirst({
-      where: {
-        status: "pending",
-        ...(renewalType === "evaluation"
-          ? { clientId: evaluationId }
-          : { paidAccountId: evaluationId }),
-      },
-    });
-
-    if (existingRenewal) {
-      console.log(
-        "[Pagarme Platform Renewal] ⚠️ Já existe renovação pendente:",
-        existingRenewal.id
-      );
-      return Response.json(
-        {
-          error: "Já existe uma renovação pendente",
-          renewal: {
-            id: existingRenewal.id,
-            paymentId: existingRenewal.paymentId,
-            pixCode: existingRenewal.pixCode,
-            expiresAt: existingRenewal.pixExpiresAt,
-          },
-        },
-        { status: 400, headers: corsHeaders }
-      );
-    }
-
     // Preparar dados de renovação
     console.log(
       "[Pagarme Platform Renewal] Preparando dados de renovação..."
