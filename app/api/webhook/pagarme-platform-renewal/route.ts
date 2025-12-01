@@ -97,69 +97,19 @@ export async function POST(req: NextRequest) {
         "[Pagarme Platform Renewal Webhook] Iniciando transação de renovação..."
       );
 
-      // 1. Atualizar status da renovação
+      // 1. Atualizar status da renovação para "paid" (aguardando processo manual)
       await tx.platformRenewal.update({
         where: { id: pendingRenewal.id },
         data: {
-          status: "completed",
+          status: "paid",
           renewalDate: new Date(), // Data de confirmação do pagamento
           updatedAt: new Date(),
         },
       });
 
       console.log(
-        "[Pagarme Platform Renewal Webhook] ✅ Status da renovação atualizado para 'completed'"
+        "[Pagarme Platform Renewal Webhook] ✅ Status da renovação atualizado para 'paid' (aguardando processo manual)"
       );
-
-      const newStartDate = new Date(); // Nova data de início = HOJE
-
-      // 2. Renovar plataforma do Client ou PaidAccount
-      if (
-        pendingRenewal.renewalType === "evaluation" &&
-        pendingRenewal.clientId
-      ) {
-        // Renovação de Client (em avaliação)
-        await tx.client.update({
-          where: { id: pendingRenewal.clientId },
-          data: {
-            platformStartDate: newStartDate, // Renova por +30 dias
-            lastRenewalDate: new Date(),
-            renewalPaymentId: null, // Limpa o payment ID pendente
-          },
-        });
-
-        console.log(
-          `[Pagarme Platform Renewal Webhook] ✅ Client ${pendingRenewal.clientId} renovado`
-        );
-        console.log(
-          `[Pagarme Platform Renewal Webhook] Nova data de expiração: ${new Date(
-            newStartDate.getTime() + 30 * 24 * 60 * 60 * 1000
-          ).toISOString()}`
-        );
-      } else if (
-        pendingRenewal.renewalType === "paid_account" &&
-        pendingRenewal.paidAccountId
-      ) {
-        // Renovação de PaidAccount (conta aprovada)
-        await tx.paidAccount.update({
-          where: { id: pendingRenewal.paidAccountId },
-          data: {
-            startDate: newStartDate, // Renova por +30 dias
-            status: "Ativo", // Garante que está ativo
-            lastRenewalDate: new Date(),
-            renewalPaymentId: null, // Limpa o payment ID pendente
-          },
-        });
-
-        console.log(
-          `[Pagarme Platform Renewal Webhook] ✅ PaidAccount ${pendingRenewal.paidAccountId} renovado`
-        );
-        console.log(
-          `[Pagarme Platform Renewal Webhook] Nova data de expiração: ${new Date(
-            newStartDate.getTime() + 30 * 24 * 60 * 60 * 1000
-          ).toISOString()}`
-        );
-      }
     });
 
     console.log(

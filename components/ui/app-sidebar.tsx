@@ -72,6 +72,10 @@ const data = {
           title: "Analista de Operações",
           url: "/operations-analyst",
         },
+        {
+          title: "Renovações de Plataforma",
+          url: "/platform-renewals",
+        },
       ],
     },
     {
