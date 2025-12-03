@@ -64,10 +64,12 @@ export async function checkClientRenewalStatus(
     },
   });
 
-  // Só permite renovação se estiver "Em Avaliação" ou "Aprovado"
+  // Só permite renovação se estiver "Em Curso", "Aprovado" ou "Aguardando Pagamento"
+  // Não permite se estiver "Reprovado" ou "Aguardando Início"
   if (
     !client ||
     client.traderStatus === "Reprovado" ||
+    client.traderStatus === "Aguardando Inicio" ||
     !client.platformStartDate
   ) {
     return null;
@@ -123,10 +125,11 @@ export async function checkPaidAccountRenewalStatus(
     },
   });
 
-  // Só permite renovação se status for "Ativo"
+  // Só permite renovação se status for "Ativo" ou "Aguardando Pagamento"
   if (
     !paidAccount ||
-    paidAccount.status !== "Ativo" ||
+    (paidAccount.status !== "Ativo" &&
+      paidAccount.status !== "Aguardando Pagamento") ||
     !paidAccount.startDate
   ) {
     return null;
