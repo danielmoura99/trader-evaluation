@@ -336,6 +336,9 @@ export function ClientForm({
                     <SelectItem value={TraderStatus.IN_PROGRESS}>
                       Em Curso
                     </SelectItem>
+                    <SelectItem value={TraderStatus.AWAITING_PAYMENT}>
+                      Aguardando Pagamento
+                    </SelectItem>
                     <SelectItem value={TraderStatus.APPROVED}>
                       Aprovado
                     </SelectItem>

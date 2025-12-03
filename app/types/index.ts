@@ -6,6 +6,7 @@ export const TraderStatus = {
   APPROVED: "Aprovado",
   REJECTED: "Reprovado",
   DIRECT: "Direto",
+  AWAITING_PAYMENT: "Aguardando Pagamento",
 } as const;
 
 // Adicionar novo status para PaidAccount
@@ -13,6 +14,7 @@ export const PaidAccountStatus = {
   WAITING: "Aguardando",
   ACTIVE: "Ativo",
   CANCELLED: "Cancelado",
+  AWAITING_PAYMENT: "Aguardando Pagamento",
 } as const;
 
 // Tipo para o Contato
@@ -40,6 +42,7 @@ export const paidAccountSchema = z.object({
     PaidAccountStatus.WAITING,
     PaidAccountStatus.ACTIVE,
     PaidAccountStatus.CANCELLED,
+    PaidAccountStatus.AWAITING_PAYMENT,
   ]),
   startDate: z.date().nullable(),
   endDate: z.date().nullable(),
@@ -75,6 +78,7 @@ export const clientSchema = z.object({
     TraderStatus.APPROVED,
     TraderStatus.REJECTED,
     TraderStatus.DIRECT,
+    TraderStatus.AWAITING_PAYMENT,
   ]),
   startDate: z.date().optional().nullable(),
   endDate: z.date().optional().nullable(),

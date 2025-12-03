@@ -27,7 +27,7 @@ const editPaidAccountSchema = z.object({
   // Dados da conta remunerada
   platform: z.string().min(1, "Plataforma é obrigatória"),
   plan: z.string().min(1, "Plano é obrigatório"),
-  status: z.enum(["Aguardando", "Ativo", "Cancelado"]),
+  status: z.enum(["Aguardando", "Ativo", "Cancelado", "Aguardando Pagamento"]),
 
   // Datas da conta remunerada
   startDate: z.date().nullable().optional(), // Data de ativação na plataforma
@@ -71,7 +71,11 @@ export function EditPaidAccountForm({
     defaultValues: {
       platform: initialData.platform,
       plan: initialData.plan,
-      status: initialData.status as "Aguardando" | "Ativo" | "Cancelado",
+      status: initialData.status as
+        | "Aguardando"
+        | "Ativo"
+        | "Cancelado"
+        | "Aguardando Pagamento",
       startDate: initialData.startDate,
       endDate: initialData.endDate,
       clientName: initialData.clientName,
@@ -268,6 +272,9 @@ export function EditPaidAccountForm({
                     </SelectItem>
                     <SelectItem value={PaidAccountStatus.ACTIVE}>
                       🟢 Ativo
+                    </SelectItem>
+                    <SelectItem value={PaidAccountStatus.AWAITING_PAYMENT}>
+                      ⏳ Aguardando Pagamento
                     </SelectItem>
                     <SelectItem value={PaidAccountStatus.CANCELLED}>
                       🔴 Cancelado
