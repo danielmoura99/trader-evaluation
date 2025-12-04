@@ -75,6 +75,7 @@ interface AnalysisResult {
 }
 
 const PLAN_GOALS = {
+  // Formatos processados (TC - XXX)
   "TC - 50K": 1000,
   "TC - 100K": 1900,
   "TC - 250K": 4200,
@@ -84,6 +85,11 @@ const PLAN_GOALS = {
   "TC DIRETO - 20": 3800,
   "TC DIRETO - 25": 5200,
   "TC - MGT": 3000,
+  // Formatos originais do banco (Trader XXX) - para retrocompatibilidade
+  "Trader 50K": 1000,
+  "Trader 100K": 1900,
+  "Trader 250K": 4200,
+  "Trader 500K": 9000,
 } as const;
 
 export default function OperationsAnalystPage() {
@@ -301,7 +307,13 @@ export default function OperationsAnalystPage() {
                 <OperationsUpload
                   client={client}
                   planGoal={
-                    PLAN_GOALS[client.plan as keyof typeof PLAN_GOALS] || 0
+                    PLAN_GOALS[client.plan as keyof typeof PLAN_GOALS] ||
+                    (() => {
+                      console.warn(
+                        `[Operations Analyst] Plano não encontrado: "${client.plan}". Usando meta padrão de 1000.`
+                      );
+                      return 1000;
+                    })()
                   }
                   onAnalysisComplete={handleAnalysisComplete}
                 />

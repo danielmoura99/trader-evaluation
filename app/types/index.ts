@@ -129,11 +129,14 @@ export function processPlanName(description: string): string {
   } else {
     // ✅ Primeiro: tentar extrair planos especiais (Black, Platinum, etc.)
     // Formato: "Black 1M | THP", "Platinum 500K | THP", "Avaliação Black 1M | THP"
-    const specialPlanMatch = description.match(/^(?:Avaliação\s+)?([A-Za-z]+\s+\d+[MK])/i);
+    // ⚠️ NÃO captura "Trader 500K" (que deve virar "TC - 500K")
+    const specialPlanMatch = description.match(
+      /^(?:Avaliação\s+)?(Black|Platinum|Gold|Silver|Diamond)\s+\d+[MK]/i
+    );
 
     if (specialPlanMatch) {
       // ✅ Plano especial encontrado - usar o nome sem o prefixo "Avaliação"
-      processedPlan = specialPlanMatch[1].trim();
+      processedPlan = specialPlanMatch[0].replace(/^Avaliação\s+/i, "").trim();
     } else {
       // ✅ Para planos normais: extrair valor com K (100K, 250K, etc.)
       const normalMatch = description.match(/(\d+K)/i);

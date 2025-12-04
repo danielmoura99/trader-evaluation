@@ -4,6 +4,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 const PLAN_GOALS = {
+  // Formatos processados (TC - XXX)
   "TC - 50K": 1000,
   "TC - 100K": 1900,
   "TC - 250K": 4200,
@@ -13,6 +14,11 @@ const PLAN_GOALS = {
   "TC DIRETO - 20": 3800,
   "TC DIRETO - 25": 5200,
   "TC - MGT": 3000,
+  // Formatos originais do banco (Trader XXX) - para retrocompatibilidade
+  "Trader 50K": 1000,
+  "Trader 100K": 1900,
+  "Trader 250K": 4200,
+  "Trader 500K": 9000,
 } as const;
 
 // Custos por contrato
@@ -288,6 +294,22 @@ export async function POST(req: NextRequest) {
     }
 
     const planGoal = parseFloat(planGoalStr);
+
+    // ✅ PROTEÇÃO: Se planGoal for 0, NaN ou inválido, usar meta padrão
+    if (!planGoal || planGoal <= 0 || isNaN(planGoal)) {
+      console.warn(
+        `[Operations Analyst] ⚠️ Meta inválida recebida: ${planGoalStr}. Usando meta padrão de 1000.`
+      );
+      return Response.json(
+        {
+          success: false,
+          error: "Meta do plano inválida",
+          details: `O plano não possui meta cadastrada. Verifique se o plano está correto.`,
+        },
+        { status: 400 }
+      );
+    }
+
     const dailyLimit = planGoal * 0.3;
 
     console.log("[Operations Analyst] Meta do plano:", planGoal);
