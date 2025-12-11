@@ -31,6 +31,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Evento ignorado" });
     }
 
+    // ✅ FILTRO: Verificar se tem metadata de renovação (proteção contra webhooks de avaliação)
+    const metadata = webhookData.data?.metadata;
+    if (!metadata?.type && !metadata?.service) {
+      console.log(
+        "[Pagarme Platform Renewal Webhook] ⚠️ Metadata ausente - Webhook ignorado (provavelmente é uma avaliação)"
+      );
+      return NextResponse.json({
+        message: "Metadata de renovação ausente - webhook ignorado",
+        info: "Este webhook não possui marcadores de renovação de plataforma",
+      });
+    }
+
+    // Verificar se NÃO é uma renovação
+    if (metadata.type !== "platform_renewal" && metadata.service !== "platform_renewal") {
+      console.log(
+        "[Pagarme Platform Renewal Webhook] ⚠️ Não é renovação de plataforma - Ignorando (será processado por /api/webhook/pagarme)"
+      );
+      return NextResponse.json({
+        message: "Não é renovação de plataforma - webhook ignorado",
+        info: "Este webhook será processado pelo endpoint de avaliações",
+      });
+    }
+
     const orderId = webhookData.data?.id;
     const orderStatus = webhookData.data?.status;
 
@@ -38,6 +61,10 @@ export async function POST(req: NextRequest) {
       event: webhookData.type,
       orderId,
       orderStatus,
+      metadata: {
+        type: metadata.type,
+        service: metadata.service,
+      },
     });
 
     if (!orderId) {

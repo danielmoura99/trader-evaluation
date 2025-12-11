@@ -57,6 +57,10 @@ const data = {
           url: "/paid-accounts",
         },
         {
+          title: "Traders Cancelados",
+          url: "/cancelled-accounts",
+        },
+        {
           title: "Clientes MGT",
           url: "/mgc-clients",
         },

@@ -1,13 +1,9 @@
-// app/(dashboard)/paid-accounts/page.tsx
+// app/(dashboard)/cancelled-accounts/page.tsx
 "use client";
 
 import { DataTable } from "@/components/ui/data-table";
 import { columns } from "./_columns/columns";
-import {
-  getWaitingAccounts,
-  getActiveAccounts,
-  updatePaidAccount,
-} from "./_actions";
+import { getCancelledAccounts, updatePaidAccount } from "../paid-accounts/_actions";
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { PaidAccount } from "@/app/types";
@@ -17,11 +13,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { EditPaidAccountForm } from "./_components/edit-paid-account-form";
+import { EditPaidAccountForm } from "../paid-accounts/_components/edit-paid-account-form";
 
 declare global {
   interface Window {
-    activatePaidAccount: (id: string) => Promise<void>;
     editPaidAccount: (
       account: PaidAccount & {
         client: {
@@ -37,20 +32,8 @@ declare global {
   }
 }
 
-function PaidAccountsContent() {
-  const [waitingAccounts, setWaitingAccounts] = useState<
-    (PaidAccount & {
-      client: {
-        name: string;
-        email: string;
-        cpf: string;
-        birthDate: Date;
-        startDate: Date | null;
-        observation: string | null;
-      };
-    })[]
-  >([]);
-  const [activeAccounts, setActiveAccounts] = useState<
+function CancelledAccountsContent() {
+  const [accounts, setAccounts] = useState<
     (PaidAccount & {
       client: {
         name: string;
@@ -80,26 +63,9 @@ function PaidAccountsContent() {
 
   const fetchAccounts = useCallback(async () => {
     try {
-      const [waiting, active] = await Promise.all([
-        getWaitingAccounts(),
-        getActiveAccounts(),
-      ]);
-
-      setWaitingAccounts(
-        waiting as (PaidAccount & {
-          client: {
-            name: string;
-            email: string;
-            cpf: string;
-            birthDate: Date;
-            startDate: Date | null;
-            observation: string | null;
-          };
-        })[]
-      );
-
-      setActiveAccounts(
-        active as (PaidAccount & {
+      const data = await getCancelledAccounts();
+      setAccounts(
+        data as (PaidAccount & {
           client: {
             name: string;
             email: string;
@@ -114,7 +80,7 @@ function PaidAccountsContent() {
       toast({
         title: "Erro ao carregar contas",
         description:
-          "Ocorreu um erro ao carregar a lista de contas remuneradas.",
+          "Ocorreu um erro ao carregar a lista de contas canceladas.",
         variant: "destructive",
       });
     }
@@ -133,7 +99,6 @@ function PaidAccountsContent() {
     }
   }, []);
 
-  // ✅ NOVO: Handler expandido para todos os campos
   const handleEditSubmit = async (data: {
     // Dados da conta remunerada
     platform: string;
@@ -169,19 +134,19 @@ function PaidAccountsContent() {
   };
 
   return (
-    <div className="h-full flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+    <div className="h-full flex flex-col">
+      <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-semibold text-zinc-100">
-          Contas Remuneradas
+          Traders Cancelados
         </h1>
       </div>
 
-      {/* ✅ Modal de edição expandido */}
+      {/* Modal de edição */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
         <DialogContent className="bg-zinc-900 border-zinc-800 max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-zinc-100 text-xl">
-              ✏️ Editar Conta Remunerada
+              ✏️ Editar Conta Cancelada
             </DialogTitle>
           </DialogHeader>
           {editingAccount && (
@@ -207,41 +172,21 @@ function PaidAccountsContent() {
         </DialogContent>
       </Dialog>
 
-      {/* ✅ TABELA 1: Contas Aguardando */}
-      <div className="space-y-2">
-        <h2 className="text-lg font-medium text-zinc-200">
-          🟡 Aguardando Liberação ({waitingAccounts.length})
-        </h2>
-        <div className="w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50">
-          <DataTable
-            columns={columns}
-            data={waitingAccounts}
-            searchColumn="client.name"
-          />
-        </div>
-      </div>
-
-      {/* ✅ TABELA 2: Contas Ativas e Aguardando Pagamento */}
-      <div className="space-y-2">
-        <h2 className="text-lg font-medium text-zinc-200">
-          🟢 Contas Ativas ({activeAccounts.length})
-        </h2>
-        <div className="w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50">
-          <DataTable
-            columns={columns}
-            data={activeAccounts}
-            searchColumn="client.name"
-          />
-        </div>
+      <div className="w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50">
+        <DataTable
+          columns={columns}
+          data={accounts}
+          searchColumn="client.name"
+        />
       </div>
     </div>
   );
 }
 
-export default function PaidAccountsPage() {
+export default function CancelledAccountsPage() {
   return (
     <div className="w-full">
-      <PaidAccountsContent />
+      <CancelledAccountsContent />
     </div>
   );
 }

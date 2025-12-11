@@ -22,11 +22,11 @@ export async function POST(req: NextRequest) {
       return Response.json({ message: "Evento ignorado" });
     }
 
-    // ✅ FILTRO: Ignorar webhooks de RENOVAÇÃO DE PLATAFORMA
+    // ✅ FILTRO 1: Ignorar webhooks de RENOVAÇÃO DE PLATAFORMA (via metadata)
     const metadata = webhookData.data?.metadata;
     if (metadata?.type === "platform_renewal" || metadata?.service === "platform_renewal") {
       console.log(
-        "[Pagar.me Webhook] ⚠️ Renovação de plataforma detectada - Ignorando (será processado por /api/webhook/pagarme-platform-renewal)"
+        "[Pagar.me Webhook] ⚠️ Renovação de plataforma detectada via metadata - Ignorando (será processado por /api/webhook/pagarme-platform-renewal)"
       );
       return Response.json({
         message: "Renovação de plataforma - webhook ignorado",
@@ -44,6 +44,24 @@ export async function POST(req: NextRequest) {
         { error: "Dados de pagamento inválidos" },
         { status: 400 }
       );
+    }
+
+    // ✅ FILTRO 2: Verificar no DB se este orderId é uma renovação (proteção caso metadata falhe)
+    const existingRenewal = await prisma.platformRenewal.findFirst({
+      where: {
+        paymentId: paymentData.orderId,
+      },
+    });
+
+    if (existingRenewal) {
+      console.log(
+        "[Pagar.me Webhook] ⚠️ Renovação de plataforma detectada via DB - Ignorando (será processado por /api/webhook/pagarme-platform-renewal)"
+      );
+      return Response.json({
+        message: "Renovação de plataforma detectada via DB - webhook ignorado",
+        renewalId: existingRenewal.id,
+        info: "Este webhook será processado pelo endpoint de renovações",
+      });
     }
 
     // Registrar o pagamento no banco de dados

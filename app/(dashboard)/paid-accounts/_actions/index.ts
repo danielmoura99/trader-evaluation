@@ -78,6 +78,124 @@ export async function getPaidAccounts() {
   });
 }
 
+// ✅ NOVA: Buscar contas com status "Aguardando"
+export async function getWaitingAccounts() {
+  const accounts = await prisma.paidAccount.findMany({
+    where: {
+      status: "Aguardando",
+    },
+    include: {
+      client: {
+        select: {
+          name: true,
+          email: true,
+          cpf: true,
+          birthDate: true,
+          startDate: true,
+          observation: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc", // Mais recentes primeiro
+    },
+  });
+
+  return accounts;
+}
+
+// ✅ NOVA: Buscar contas "Ativo" e "Aguardando Pagamento" ordenadas por vencimento
+export async function getActiveAccounts() {
+  const accounts = await prisma.paidAccount.findMany({
+    where: {
+      status: {
+        in: ["Ativo", "Aguardando Pagamento"],
+      },
+    },
+    include: {
+      client: {
+        select: {
+          name: true,
+          email: true,
+          cpf: true,
+          birthDate: true,
+          startDate: true,
+          observation: true,
+        },
+      },
+    },
+  });
+
+  // Ordenação: "Aguardando Pagamento" primeiro, depois "Ativo" por dias a vencer
+  return accounts.sort((a, b) => {
+    // 1. "Aguardando Pagamento" sempre na frente
+    if (
+      a.status === "Aguardando Pagamento" &&
+      b.status !== "Aguardando Pagamento"
+    )
+      return -1;
+    if (
+      b.status === "Aguardando Pagamento" &&
+      a.status !== "Aguardando Pagamento"
+    )
+      return 1;
+
+    // 2. Se ambos são "Ativo", ordenar por dias a vencer
+    if (a.status === "Ativo" && b.status === "Ativo") {
+      if (a.startDate && b.startDate) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const aExpiration = new Date(a.startDate);
+        aExpiration.setDate(aExpiration.getDate() + 30);
+        aExpiration.setHours(0, 0, 0, 0);
+
+        const bExpiration = new Date(b.startDate);
+        bExpiration.setDate(bExpiration.getDate() + 30);
+        bExpiration.setHours(0, 0, 0, 0);
+
+        const aDaysToExpire = Math.ceil(
+          (aExpiration.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+        );
+        const bDaysToExpire = Math.ceil(
+          (bExpiration.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+        );
+
+        return aDaysToExpire - bDaysToExpire;
+      }
+    }
+
+    // 3. Fallback: Por data de criação
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+}
+
+// ✅ NOVA: Buscar contas canceladas ordenadas por data de cancelamento
+export async function getCancelledAccounts() {
+  const accounts = await prisma.paidAccount.findMany({
+    where: {
+      status: "Cancelado",
+    },
+    include: {
+      client: {
+        select: {
+          name: true,
+          email: true,
+          cpf: true,
+          birthDate: true,
+          startDate: true,
+          observation: true,
+        },
+      },
+    },
+    orderBy: {
+      endDate: "desc", // Mais recentemente canceladas primeiro
+    },
+  });
+
+  return accounts;
+}
+
 export async function activatePaidAccount(id: string) {
   const startDate = new Date();
 
