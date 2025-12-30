@@ -4,6 +4,6 @@ export const BROKER_CONFIG = {
   testAccount: "1000380752",
   paidAccount: "70627606",
   mgcAccount: "103059646",
-  apiGatewayUrl:
-    "https://m043hg2via.execute-api.sa-east-1.amazonaws.com/prod/test",
+  // Nova configuração: URL direta da API Nelogica (usa Fixie para IP fixo)
+  nelogicaApiUrl: "https://api-broker4.nelogica.com.br/request.php",
 };
