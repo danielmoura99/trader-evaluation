@@ -13,6 +13,7 @@ export async function getPaidAccounts() {
           name: true,
           email: true,
           cpf: true,
+          phone: true,
           birthDate: true,
           startDate: true, // Data de início do cliente (do formulário)
           observation: true, // Campo observação
@@ -90,6 +91,7 @@ export async function getWaitingAccounts() {
           name: true,
           email: true,
           cpf: true,
+          phone: true,
           birthDate: true,
           startDate: true,
           observation: true,
@@ -118,6 +120,7 @@ export async function getActiveAccounts() {
           name: true,
           email: true,
           cpf: true,
+          phone: true,
           birthDate: true,
           startDate: true,
           observation: true,
@@ -182,6 +185,7 @@ export async function getCancelledAccounts() {
           name: true,
           email: true,
           cpf: true,
+          phone: true,
           birthDate: true,
           startDate: true,
           observation: true,
