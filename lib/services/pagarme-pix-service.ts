@@ -28,6 +28,11 @@ export async function generatePixForRenewal(
     throw new Error("PAGARME_API_KEY não configurada no .env");
   }
 
+  // Extrair DDD e número do telefone (formato: "11999999999" ou "(11)99999-9999")
+  const rawPhone = (renewalData.customerPhone || "").replace(/\D/g, "");
+  const areaCode = rawPhone.length >= 10 ? rawPhone.slice(0, 2) : "62";
+  const phoneNumber = rawPhone.length >= 10 ? rawPhone.slice(2) : "93776216";
+
   // Preparar payload para Pagarme Orders API
   const payload = {
     customer: {
@@ -35,6 +40,13 @@ export async function generatePixForRenewal(
       email: renewalData.customerEmail,
       document: renewalData.customerCpf.replace(/\D/g, ""), // Remover formatação
       type: "individual",
+      phones: {
+        mobile_phone: {
+          country_code: "55",
+          area_code: areaCode,
+          number: phoneNumber,
+        },
+      },
     },
     items: [
       {

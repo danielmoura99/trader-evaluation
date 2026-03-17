@@ -38,6 +38,7 @@ export interface PlatformRenewalData {
   customerName: string;
   customerEmail: string;
   customerCpf: string;
+  customerPhone: string | null;
   platform: string;
   amount: number;
   metadata: {
@@ -194,6 +195,7 @@ export async function prepareClientRenewalData(
     customerName: client.name,
     customerEmail: client.email,
     customerCpf: client.cpf,
+    customerPhone: client.phone || null,
     platform: client.platform,
     amount: renewalStatus.renewalPrice,
     metadata: {
@@ -225,6 +227,7 @@ export async function preparePaidAccountRenewalData(
           name: true,
           email: true,
           cpf: true,
+          phone: true,
         },
       },
     },
@@ -240,6 +243,7 @@ export async function preparePaidAccountRenewalData(
     customerName: paidAccount.client.name,
     customerEmail: paidAccount.client.email,
     customerCpf: paidAccount.client.cpf,
+    customerPhone: paidAccount.client.phone || null,
     platform: paidAccount.platform,
     amount: renewalStatus.renewalPrice,
     metadata: {
