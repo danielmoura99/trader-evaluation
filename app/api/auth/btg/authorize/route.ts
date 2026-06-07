@@ -1,21 +1,23 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 // app/api/auth/btg/authorize/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getAuthorizationUrl } from "@/lib/services/btg-auth-service";
+import { ensureAdminApiAccess } from "@/lib/security";
 
-/**
- * Endpoint para iniciar o fluxo de autenticação OAuth2 com BTG
- *
- * Acesse: https://seu-dominio.com/api/auth/btg/authorize
- * Será redirecionado para o BTG para autorizar
- * Depois volta para /api/auth/btg/callback
- */
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
+    const accessDenied = await ensureAdminApiAccess();
+    if (accessDenied) {
+      return accessDenied;
+    }
+
     const authUrl = getAuthorizationUrl();
     return NextResponse.redirect(authUrl);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Erro interno",
+      },
+      { status: 500 }
+    );
   }
 }

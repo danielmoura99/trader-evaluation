@@ -1,12 +1,14 @@
-// app/(dashboard)/reproved/_actions/index.ts
 "use server";
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { requireAuthenticatedSession } from "@/lib/security";
 
 export async function getReprovedClients() {
+  await requireAuthenticatedSession();
+
   try {
-    const clients = await prisma.client.findMany({
+    return await prisma.client.findMany({
       where: {
         traderStatus: "Reprovado",
       },
@@ -21,9 +23,6 @@ export async function getReprovedClients() {
         cancellationDate: "desc",
       },
     });
-
-    //console.log("Clientes encontrados:", clients); // Debug
-    return clients;
   } catch (error) {
     console.error("Erro ao buscar clientes:", error);
     throw error;
@@ -38,9 +37,9 @@ export async function addContact(
     status: string;
   }
 ) {
-  try {
-    console.log("Adicionando contato:", { clientId, data }); // Debug
+  await requireAuthenticatedSession();
 
+  try {
     const contact = await prisma.contact.create({
       data: {
         clientId,
@@ -50,7 +49,6 @@ export async function addContact(
       },
     });
 
-    console.log("Contato criado:", contact); // Debug
     revalidatePath("/reproved");
     return contact;
   } catch (error) {
@@ -60,7 +58,9 @@ export async function addContact(
 }
 
 export async function getContactHistory(clientId: string) {
-  return await prisma.contact.findMany({
+  await requireAuthenticatedSession();
+
+  return prisma.contact.findMany({
     where: {
       clientId,
     },

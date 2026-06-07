@@ -1,11 +1,13 @@
-// app/(dashboard)/paid-accounts/_actions/index.ts
 "use server";
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { PaidAccountStatus } from "@/app/types";
+import { requireAuthenticatedSession } from "@/lib/security";
 
 export async function getPaidAccounts() {
+  await requireAuthenticatedSession();
+
   const accounts = await prisma.paidAccount.findMany({
     include: {
       client: {
@@ -15,23 +17,19 @@ export async function getPaidAccounts() {
           cpf: true,
           phone: true,
           birthDate: true,
-          startDate: true, // Data de início do cliente (do formulário)
-          observation: true, // Campo observação
+          startDate: true,
+          observation: true,
         },
       },
     },
   });
 
-  // ✅ NOVA LÓGICA: Ordenação inteligente com prioridade para vencimento
   return accounts.sort((a, b) => {
-    // 1. PRIMEIRO: Contas "Aguardando" sempre no topo
     if (a.status === "Aguardando" && b.status !== "Aguardando") return -1;
     if (b.status === "Aguardando" && a.status !== "Aguardando") return 1;
 
-    // 2. SEGUNDO: Contas "Ativo" ordenadas por proximidade do vencimento
     if (a.status === "Ativo" && b.status === "Ativo") {
       if (a.startDate && b.startDate) {
-        // Calcular dias para vencer para ambas
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -50,23 +48,19 @@ export async function getPaidAccounts() {
           (bExpiration.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
         );
 
-        // Contas mais próximas do vencimento primeiro
         return aDaysToExpire - bDaysToExpire;
       }
     }
 
-    // 3. TERCEIRO: Separar "Ativo" de "Cancelado"
     if (a.status === "Ativo" && b.status === "Cancelado") return -1;
     if (b.status === "Ativo" && a.status === "Cancelado") return 1;
 
-    // 4. QUARTO: Contas "Cancelado" por data de cancelamento (mais recentes primeiro)
     if (a.status === "Cancelado" && b.status === "Cancelado") {
       if (a.endDate && b.endDate) {
         return new Date(b.endDate).getTime() - new Date(a.endDate).getTime();
       }
     }
 
-    // 5. Fallback: Por data de início do cliente (mais antigos primeiro)
     if (a.client.startDate && b.client.startDate) {
       return (
         new Date(a.client.startDate).getTime() -
@@ -74,14 +68,14 @@ export async function getPaidAccounts() {
       );
     }
 
-    // 6. Último fallback: Por data de criação
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 }
 
-// ✅ NOVA: Buscar contas com status "Aguardando"
 export async function getWaitingAccounts() {
-  const accounts = await prisma.paidAccount.findMany({
+  await requireAuthenticatedSession();
+
+  return prisma.paidAccount.findMany({
     where: {
       status: "Aguardando",
     },
@@ -99,15 +93,14 @@ export async function getWaitingAccounts() {
       },
     },
     orderBy: {
-      createdAt: "desc", // Mais recentes primeiro
+      createdAt: "desc",
     },
   });
-
-  return accounts;
 }
 
-// ✅ NOVA: Buscar contas "Ativo" e "Aguardando Pagamento" ordenadas por vencimento
 export async function getActiveAccounts() {
+  await requireAuthenticatedSession();
+
   const accounts = await prisma.paidAccount.findMany({
     where: {
       status: {
@@ -129,21 +122,20 @@ export async function getActiveAccounts() {
     },
   });
 
-  // Ordenação: "Aguardando Pagamento" primeiro, depois "Ativo" por dias a vencer
   return accounts.sort((a, b) => {
-    // 1. "Aguardando Pagamento" sempre na frente
     if (
       a.status === "Aguardando Pagamento" &&
       b.status !== "Aguardando Pagamento"
-    )
+    ) {
       return -1;
+    }
     if (
       b.status === "Aguardando Pagamento" &&
       a.status !== "Aguardando Pagamento"
-    )
+    ) {
       return 1;
+    }
 
-    // 2. Se ambos são "Ativo", ordenar por dias a vencer
     if (a.status === "Ativo" && b.status === "Ativo") {
       if (a.startDate && b.startDate) {
         const today = new Date();
@@ -168,14 +160,14 @@ export async function getActiveAccounts() {
       }
     }
 
-    // 3. Fallback: Por data de criação
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 }
 
-// ✅ NOVA: Buscar contas canceladas ordenadas por data de cancelamento
 export async function getCancelledAccounts() {
-  const accounts = await prisma.paidAccount.findMany({
+  await requireAuthenticatedSession();
+
+  return prisma.paidAccount.findMany({
     where: {
       status: "Cancelado",
     },
@@ -193,21 +185,21 @@ export async function getCancelledAccounts() {
       },
     },
     orderBy: {
-      endDate: "desc", // Mais recentemente canceladas primeiro
+      endDate: "desc",
     },
   });
-
-  return accounts;
 }
 
 export async function activatePaidAccount(id: string) {
+  await requireAuthenticatedSession();
+
   const startDate = new Date();
 
   await prisma.paidAccount.update({
     where: { id },
     data: {
       status: "Ativo",
-      startDate, // ✅ Esta é a data de ativação da conta na plataforma
+      startDate,
     },
   });
   revalidatePath("/paid-accounts");
@@ -218,6 +210,8 @@ export async function createPaidAccount(
   platform: string,
   plan: string
 ) {
+  await requireAuthenticatedSession();
+
   await prisma.paidAccount.create({
     data: {
       clientId,
@@ -230,6 +224,8 @@ export async function createPaidAccount(
 }
 
 export async function cancelPaidAccount(id: string) {
+  await requireAuthenticatedSession();
+
   await prisma.paidAccount.update({
     where: { id },
     data: {
@@ -243,33 +239,29 @@ export async function cancelPaidAccount(id: string) {
 export async function updatePaidAccount(
   id: string,
   data: {
-    // Dados da conta remunerada
     platform: string;
     plan: string;
     status: string;
     startDate?: Date | null;
     endDate?: Date | null;
-
-    // Dados do cliente
     clientName: string;
     clientEmail: string;
     clientStartDate?: Date | null;
     clientObservation?: string;
   }
 ) {
-  // ✅ Buscar a conta remunerada para obter o clientId
+  await requireAuthenticatedSession();
+
   const paidAccount = await prisma.paidAccount.findUnique({
     where: { id },
     select: { clientId: true },
   });
 
   if (!paidAccount) {
-    throw new Error("Conta remunerada não encontrada");
+    throw new Error("Conta remunerada nao encontrada");
   }
 
-  // ✅ Usar transação para atualizar ambas as tabelas atomicamente
   await prisma.$transaction(async (tx) => {
-    // Atualizar dados da conta remunerada
     await tx.paidAccount.update({
       where: { id },
       data: {
@@ -281,7 +273,6 @@ export async function updatePaidAccount(
       },
     });
 
-    // Atualizar dados do cliente
     await tx.client.update({
       where: { id: paidAccount.clientId },
       data: {
@@ -289,8 +280,8 @@ export async function updatePaidAccount(
         email: data.clientEmail,
         startDate: data.clientStartDate,
         observation: data.clientObservation,
-        plan: data.plan, // ✅ Sincronizar plano entre as tabelas
-        platform: data.platform, // ✅ Sincronizar plataforma entre as tabelas
+        plan: data.plan,
+        platform: data.platform,
       },
     });
   });

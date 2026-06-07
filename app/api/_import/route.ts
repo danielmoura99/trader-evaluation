@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { importClients } from "@/utils/import-data";
+import { ensureAuthenticatedApiAccess } from "@/lib/security";
 
-// Aumenta o limite de tempo da requisição para 5 minutos
-export const maxDuration = 300; // segundos
+export const maxDuration = 300;
 
 export async function POST(req: Request) {
   try {
+    const accessDenied = await ensureAuthenticatedApiAccess();
+    if (accessDenied) {
+      return accessDenied;
+    }
+
     const formData = await req.formData();
     const file = formData.get("file") as File;
 
@@ -21,7 +26,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Erro na importação:", error);
+    console.error("Erro na importacao:", error);
     return NextResponse.json(
       {
         error:

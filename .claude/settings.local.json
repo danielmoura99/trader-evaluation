@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(cat:*)",
-      "Read(//e/client-portal/**)"
+      "Read(//e/client-portal/**)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"EXIT: $?\")",
+      "WebFetch(domain:docs.pagar.me)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

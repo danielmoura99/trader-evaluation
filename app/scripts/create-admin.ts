@@ -2,12 +2,20 @@ import { hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
 async function main() {
-  const password = await hash("Software3009TH*", 12);
+  const email = process.env.ADMIN_EMAIL;
+  const passwordValue = process.env.ADMIN_PASSWORD;
+  const name = process.env.ADMIN_NAME || "Admin";
+
+  if (!email || !passwordValue) {
+    throw new Error("Defina ADMIN_EMAIL e ADMIN_PASSWORD antes de criar o admin");
+  }
+
+  const password = await hash(passwordValue, 12);
 
   const admin = await prisma.user.create({
     data: {
-      name: "Admin",
-      email: "danielmoura@tradershouse.com.br",
+      name,
+      email,
       password,
       role: "ADMIN",
     },

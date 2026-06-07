@@ -9,8 +9,9 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
+  secret: process.env.NEXTAUTH_SECRET,
   pages: {
-    signIn: "/login",
+    signIn: "/auth/login",
   },
   providers: [
     CredentialsProvider({
@@ -31,7 +32,7 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user) {
-          throw new Error("Usuário não encontrado");
+          throw new Error("Credenciais inválidas");
         }
 
         const isPasswordValid = await compare(
@@ -40,14 +41,14 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!isPasswordValid) {
-          throw new Error("Senha incorreta");
+          throw new Error("Credenciais inválidas");
         }
 
         return user;
       },
     }),
   ],
-  debug: true, // Adicione isso temporariamente para ver logs detalhados
+  debug: process.env.NODE_ENV === "development",
   callbacks: {
     async session({ token, session }) {
       if (token) {

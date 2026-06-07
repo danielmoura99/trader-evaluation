@@ -5,48 +5,47 @@ import { prisma } from "@/lib/prisma";
 import { processEvaluation } from "@/lib/services/evaluation-service";
 import { processCombo } from "@/lib/services/combo-service";
 import { processEducational } from "@/lib/services/educational-service";
-// ✅ REMOVIDO: import { processDirect } from "@/lib/services/direct-service";
-import { sendRegistrationEmail } from "@/lib/email-service"; // ✅ Adicionado
+import { sendRegistrationEmail } from "@/lib/email-service";
 
 export async function POST(req: NextRequest) {
   try {
-    console.log("\n=== INÍCIO DO PROCESSAMENTO DO WEBHOOK PAGAR.ME ===");
+    console.log("\n=== INICIO DO PROCESSAMENTO DO WEBHOOK PAGAR.ME ===");
 
-    // Obter e logar o payload
     const payload = await req.text();
-    console.log("[Pagar.me Webhook] Payload recebido:", payload);
 
     const webhookData = JSON.parse(payload);
+    console.log("[Pagar.me Webhook] Evento recebido:", webhookData.type);
+
     if (webhookData.type !== "order.paid") {
       console.log("[Pagar.me Webhook] Evento ignorado:", webhookData.type);
       return Response.json({ message: "Evento ignorado" });
     }
 
-    // ✅ FILTRO 1: Ignorar webhooks de RENOVAÇÃO DE PLATAFORMA (via metadata)
     const metadata = webhookData.data?.metadata;
-    if (metadata?.type === "platform_renewal" || metadata?.service === "platform_renewal") {
+    if (
+      metadata?.type === "platform_renewal" ||
+      metadata?.service === "platform_renewal"
+    ) {
       console.log(
-        "[Pagar.me Webhook] ⚠️ Renovação de plataforma detectada via metadata - Ignorando (será processado por /api/webhook/pagarme-platform-renewal)"
+        "[Pagar.me Webhook] Renovacao de plataforma detectada via metadata"
       );
       return Response.json({
-        message: "Renovação de plataforma - webhook ignorado",
-        info: "Este webhook será processado pelo endpoint de renovações",
+        message: "Renovacao de plataforma - webhook ignorado",
+        info: "Este webhook sera processado pelo endpoint de renovacoes",
       });
     }
 
-    // Extrair dados do webhook
     const webhookService = new PagarmeWebhookService();
     const paymentData = webhookService.extractPaymentData(webhookData);
 
     if (!paymentData) {
-      console.log("[Pagar.me Webhook] Dados de pagamento inválidos");
+      console.log("[Pagar.me Webhook] Dados de pagamento invalidos");
       return Response.json(
-        { error: "Dados de pagamento inválidos" },
+        { error: "Dados de pagamento invalidos" },
         { status: 400 }
       );
     }
 
-    // ✅ FILTRO 2: Verificar no DB se este orderId é uma renovação (proteção caso metadata falhe)
     const existingRenewal = await prisma.platformRenewal.findFirst({
       where: {
         paymentId: paymentData.orderId,
@@ -55,19 +54,34 @@ export async function POST(req: NextRequest) {
 
     if (existingRenewal) {
       console.log(
-        "[Pagar.me Webhook] ⚠️ Renovação de plataforma detectada via DB - Ignorando (será processado por /api/webhook/pagarme-platform-renewal)"
+        "[Pagar.me Webhook] Renovacao de plataforma detectada via banco"
       );
       return Response.json({
-        message: "Renovação de plataforma detectada via DB - webhook ignorado",
+        message: "Renovacao de plataforma detectada via banco - webhook ignorado",
         renewalId: existingRenewal.id,
-        info: "Este webhook será processado pelo endpoint de renovações",
+        info: "Este webhook sera processado pelo endpoint de renovacoes",
       });
     }
 
-    // Registrar o pagamento no banco de dados
-    const payment = await prisma.payment.create({
-      data: {
-        hublaPaymentId: paymentData.orderId, // Usamos orderId no campo hublaPaymentId
+    const payment = await prisma.payment.upsert({
+      where: {
+        hublaPaymentId: paymentData.orderId,
+      },
+      update: {
+        platform: paymentData.platform,
+        plan: paymentData.plan,
+        amount: paymentData.amount,
+        customerEmail: paymentData.customerEmail,
+        customerName: paymentData.customerName,
+        customerPhone: paymentData.customerPhone,
+        customerDocument: paymentData.customerDocument,
+        status: "received",
+        saleDate: paymentData.saleDate,
+        paymentMethod: paymentData.paymentMethod,
+        updatedAt: new Date(),
+      },
+      create: {
+        hublaPaymentId: paymentData.orderId,
         platform: paymentData.platform,
         plan: paymentData.plan,
         amount: paymentData.amount,
@@ -83,29 +97,13 @@ export async function POST(req: NextRequest) {
 
     console.log("[Pagar.me Webhook] Pagamento registrado:", payment.id);
 
-    // ✅ CORRIGIDO: Detectar tipos de plano
     const productType = paymentData.metadata.productType?.toLowerCase();
     const isMGTPlan = paymentData.plan.includes("MGT");
     const isDirectPlan = paymentData.plan.includes("DIRETO");
 
-    console.log("[Pagar.me Webhook] Análise do tipo de produto:", {
-      productType: paymentData.metadata.productType,
-      courseId: paymentData.metadata.courseId,
-      course_id: paymentData.metadata.course_id,
-      planName: paymentData.plan,
-      isMGTPlan: isMGTPlan ? "Sim" : "Não",
-      isDirectPlan: isDirectPlan ? "Sim" : "Não",
-    });
-
     let processResult;
 
-    // ✅ CORRIGIDO: Planos DIRETO agora só registram pagamento e enviam email
     if (isDirectPlan) {
-      console.log(
-        "[Pagar.me Webhook] 🚀 Processando como PLANO DIRETO - Apenas registro"
-      );
-
-      // ✅ Para planos DIRETO: apenas enviar email, o cliente será criado na API de registro
       const registrationUrl = `${process.env.CLIENT_PORTAL_URL}/registration/${payment.hublaPaymentId}?isDirect=true`;
 
       try {
@@ -115,17 +113,13 @@ export async function POST(req: NextRequest) {
           registrationUrl,
         });
 
-        console.log(
-          "[Pagar.me Webhook] Email de registro DIRETO enviado com sucesso"
-        );
-
         processResult = {
           success: true,
           type: "direct",
           message: "Pagamento registrado e email enviado para plano direto",
           registrationUrl,
           emailSent: true,
-          clientCreated: false, // ✅ Cliente será criado na API de registro
+          clientCreated: false,
         };
       } catch (emailError) {
         console.error(
@@ -141,36 +135,28 @@ export async function POST(req: NextRequest) {
         };
       }
     } else if (productType === "combo") {
-      // ✅ MANTIDO: Funcionalidade existente
-      console.log(
-        "[Pagar.me Webhook] Processando como COMBO (avaliação + educacional)"
-      );
       processResult = await processCombo({
         paymentData,
         hublaPaymentId: payment.hublaPaymentId,
       });
     } else if (productType === "educational") {
-      // ✅ MANTIDO: Funcionalidade existente
-      console.log("[Pagar.me Webhook] Processando como EDUCACIONAL");
       processResult = await processEducational({
         paymentData,
         hublaPaymentId: payment.hublaPaymentId,
       });
     } else {
-      // ✅ MANTIDO: Default para avaliação normal
-      console.log("[Pagar.me Webhook] Processando como AVALIAÇÃO");
       processResult = await processEvaluation({
         paymentData,
         hublaPaymentId: payment.hublaPaymentId,
       });
     }
 
-    console.log("[Pagar.me Webhook] Processamento concluído:", {
+    console.log("[Pagar.me Webhook] Processamento concluido:", {
       type: processResult.type,
       success: processResult.success,
       emailSent: processResult.emailSent,
-      isDirectPlan: isDirectPlan,
-      clientCreatedInWebhook: isDirectPlan ? false : true, // ✅ Clientes DIRETO não são criados no webhook
+      isDirectPlan,
+      clientCreatedInWebhook: !isDirectPlan,
     });
 
     console.log("=== FIM DO PROCESSAMENTO DO WEBHOOK PAGAR.ME ===\n");
@@ -181,10 +167,10 @@ export async function POST(req: NextRequest) {
       orderId: paymentData.orderId,
       processResult,
       planType: isDirectPlan ? "direct" : isMGTPlan ? "mgc" : "regular",
-      clientCreatedInWebhook: !isDirectPlan, // ✅ Indica onde o cliente foi/será criado
+      clientCreatedInWebhook: !isDirectPlan,
     });
   } catch (error) {
-    console.error("[Pagar.me Webhook] Erro crítico:", error);
+    console.error("[Pagar.me Webhook] Erro critico:", error);
     return Response.json(
       {
         error: "Erro interno do servidor",

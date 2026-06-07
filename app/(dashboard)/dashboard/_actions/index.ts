@@ -3,20 +3,18 @@
 import { prisma } from "@/lib/prisma";
 import { TraderStatus } from "@/app/types";
 import { startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { requireAuthenticatedSession } from "@/lib/security";
 
 export async function getDashboardStats() {
-  // Total de clientes
-  const totalClients = await prisma.client.count();
+  await requireAuthenticatedSession();
 
-  // Clientes por status
+  const totalClients = await prisma.client.count();
   const awaitingClients = await prisma.client.count({
     where: { traderStatus: TraderStatus.WAITING },
   });
-
   const inEvaluationClients = await prisma.client.count({
     where: { traderStatus: TraderStatus.IN_PROGRESS },
   });
-
   const completedClients = await prisma.client.count({
     where: {
       traderStatus: {
@@ -24,13 +22,9 @@ export async function getDashboardStats() {
       },
     },
   });
-
-  // Taxa de aprovação
   const approvedClients = await prisma.client.count({
     where: { traderStatus: TraderStatus.APPROVED },
   });
-
-  // ✅ Clientes diretos (nova métrica separada)
   const directClients = await prisma.client.count({
     where: { traderStatus: TraderStatus.DIRECT },
   });
@@ -62,7 +56,6 @@ export async function getDashboardStats() {
     },
   });
 
-  // ✅ NOVA MÉTRICA: Estatísticas de planos diretos por plano
   const directByPlan = await prisma.client.groupBy({
     by: ["plan"],
     _count: {
@@ -86,17 +79,13 @@ export async function getDashboardStats() {
             ? ((approvedForPlan / totalForPlan) * 100).toFixed(1)
             : "0.0",
         rateNumber:
-          totalForPlan > 0 ? (approvedForPlan / totalForPlan) * 100 : 0, // campo adicional para ordenação
+          totalForPlan > 0 ? (approvedForPlan / totalForPlan) * 100 : 0,
       };
     })
-    .sort((a, b) => b.rateNumber - a.rateNumber) // Ordena por taxa em ordem decrescente
-    .map(({ plan, rate }) => ({ plan, rate })); // Remove o campo auxiliar rateNumber
+    .sort((a, b) => b.rateNumber - a.rateNumber)
+    .map(({ plan, rate }) => ({ plan, rate }));
 
-  // ✅ NOVA ESTATÍSTICA: Evolução mensal separando avaliações de diretos
   const currentMonth = new Date();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const lastMonth = subMonths(currentMonth, 1);
-
   const monthlyData = await Promise.all(
     Array.from({ length: 6 }, (_, i) => {
       const month = subMonths(currentMonth, i);
@@ -104,7 +93,6 @@ export async function getDashboardStats() {
       const endDate = endOfMonth(month);
 
       return Promise.all([
-        // Clientes avaliativos criados no mês
         prisma.client.count({
           where: {
             createdAt: {
@@ -121,7 +109,6 @@ export async function getDashboardStats() {
             },
           },
         }),
-        // Clientes diretos criados no mês
         prisma.client.count({
           where: {
             createdAt: {
@@ -131,7 +118,6 @@ export async function getDashboardStats() {
             traderStatus: TraderStatus.DIRECT,
           },
         }),
-        // Aprovações no mês
         prisma.client.count({
           where: {
             endDate: {
@@ -154,8 +140,8 @@ export async function getDashboardStats() {
     totalClients,
     awaitingClients,
     inEvaluationClients,
-    completedClients, // ✅ Somente avaliações finalizadas
-    directClients, // ✅ Nova métrica
+    completedClients,
+    directClients,
     approvalRate,
     planApprovalRates,
     directByPlan: directByPlan.map((plan) => ({
@@ -167,6 +153,8 @@ export async function getDashboardStats() {
 }
 
 export async function getClientsByPlan() {
+  await requireAuthenticatedSession();
+
   const clientsByPlan = await prisma.client.groupBy({
     by: ["plan"],
     _count: {
@@ -181,20 +169,19 @@ export async function getClientsByPlan() {
 }
 
 export async function getEvaluationsByMonth() {
-  // Buscar dados dos últimos 6 meses
+  await requireAuthenticatedSession();
+
   const months = Array.from({ length: 6 })
     .map((_, i) => {
       const date = subMonths(new Date(), i);
       return {
         startDate: startOfMonth(date),
         endDate: endOfMonth(date),
-        month: date.getMonth(),
-        year: date.getFullYear(),
       };
     })
     .reverse();
 
-  const evaluationsData = await Promise.all(
+  return Promise.all(
     months.map(async ({ startDate, endDate }) => {
       const count = await prisma.client.count({
         where: {
@@ -210,12 +197,12 @@ export async function getEvaluationsByMonth() {
       };
     })
   );
-
-  return evaluationsData;
 }
 
 export async function getRecentClients() {
-  return await prisma.client.findMany({
+  await requireAuthenticatedSession();
+
+  return prisma.client.findMany({
     orderBy: {
       createdAt: "desc",
     },

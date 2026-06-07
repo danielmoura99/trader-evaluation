@@ -1,14 +1,15 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// app/(dashboard)/platform-renewals/_actions/index.ts
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { requireAuthenticatedSession } from "@/lib/security";
 
 export async function getPlatformRenewals(filters?: {
   status?: string;
   renewalType?: string;
 }) {
-  const where: any = {};
+  await requireAuthenticatedSession();
+
+  const where: Record<string, string> = {};
 
   if (filters?.status && filters.status !== "all") {
     where.status = filters.status;
@@ -58,7 +59,6 @@ export async function getPlatformRenewals(filters?: {
     take: 100,
   });
 
-  // Formatar dados para a tabela
   return renewals.map((renewal) => {
     const customer =
       renewal.renewalType === "evaluation"
@@ -104,6 +104,8 @@ export async function getPlatformRenewals(filters?: {
 }
 
 export async function getRenewalStats() {
+  await requireAuthenticatedSession();
+
   const stats = await prisma.platformRenewal.groupBy({
     by: ["status"],
     _count: true,
@@ -120,6 +122,8 @@ export async function getRenewalStats() {
 }
 
 export async function completePlatformRenewal(renewalId: string) {
+  await requireAuthenticatedSession();
+
   const renewal = await prisma.platformRenewal.findUnique({
     where: { id: renewalId },
     select: {
@@ -131,15 +135,14 @@ export async function completePlatformRenewal(renewalId: string) {
   });
 
   if (!renewal) {
-    throw new Error("Renovação não encontrada");
+    throw new Error("Renovacao nao encontrada");
   }
 
   if (renewal.status !== "paid") {
-    throw new Error("Renovação não está no status 'paid'");
+    throw new Error("Renovacao nao esta no status 'paid'");
   }
 
   await prisma.$transaction(async (tx) => {
-    // 1. Atualizar status da renovação para "completed"
     await tx.platformRenewal.update({
       where: { id: renewalId },
       data: {
@@ -148,9 +151,8 @@ export async function completePlatformRenewal(renewalId: string) {
       },
     });
 
-    const newStartDate = new Date(); // Nova data de início = HOJE
+    const newStartDate = new Date();
 
-    // 2. Renovar plataforma do Client ou PaidAccount
     if (renewal.renewalType === "evaluation" && renewal.clientId) {
       await tx.client.update({
         where: { id: renewal.clientId },

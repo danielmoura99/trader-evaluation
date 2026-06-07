@@ -3,9 +3,12 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { PaidAccountStatus, TraderStatus } from "@/app/types";
+import { requireAuthenticatedSession } from "@/lib/security";
 
 export async function getAwaitingClients() {
-  return await prisma.client.findMany({
+  await requireAuthenticatedSession();
+
+  return prisma.client.findMany({
     where: {
       traderStatus: TraderStatus.WAITING,
     },
@@ -16,7 +19,9 @@ export async function getAwaitingClients() {
 }
 
 export async function getEvaluationClients() {
-  return await prisma.client.findMany({
+  await requireAuthenticatedSession();
+
+  return prisma.client.findMany({
     where: {
       traderStatus: TraderStatus.IN_PROGRESS,
     },
@@ -27,26 +32,23 @@ export async function getEvaluationClients() {
 }
 
 export async function startEvaluation(clientId: string) {
-  const startDate = new Date();
+  await requireAuthenticatedSession();
 
-  // Buscar o cliente para verificar o plano
+  const startDate = new Date();
   const client = await prisma.client.findUnique({
     where: { id: clientId },
     select: { plan: true },
   });
 
   if (!client) {
-    throw new Error("Cliente não encontrado");
+    throw new Error("Cliente nao encontrado");
   }
 
-  // Calcular a data de fim baseada no plano
   const endDate = new Date(startDate);
 
   if (client.plan === "TC - 50K") {
-    // Para o plano TC - 50K: 30 dias
     endDate.setDate(endDate.getDate() + 30);
   } else {
-    // Para todos os outros planos: 60 dias (padrão atual)
     endDate.setDate(endDate.getDate() + 30);
   }
 
@@ -56,7 +58,7 @@ export async function startEvaluation(clientId: string) {
       traderStatus: TraderStatus.IN_PROGRESS,
       startDate,
       endDate,
-      platformStartDate: startDate, // ← NOVO: Ativa plataforma junto com avaliação
+      platformStartDate: startDate,
     },
   });
   revalidatePath("/evaluations");
@@ -66,6 +68,8 @@ export async function finishEvaluation(
   clientId: string,
   status: "Aprovado" | "Reprovado"
 ) {
+  await requireAuthenticatedSession();
+
   await prisma.client.update({
     where: { id: clientId },
     data: {
@@ -76,7 +80,6 @@ export async function finishEvaluation(
     },
   });
 
-  // Se foi aprovado, criar PaidAccount
   if (status === "Aprovado") {
     const client = await prisma.client.findUnique({
       where: { id: clientId },

@@ -1,18 +1,22 @@
 import { NextResponse } from "next/server";
 import { importClients } from "@/utils/import-data";
+import { ensureAuthenticatedApiAccess } from "@/lib/security";
 
-// Nova sintaxe de configuração
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
-export const maxDuration = 60; // 60 segundos para plano hobby
+export const maxDuration = 60;
 
-// Reduzindo o tamanho do lote para processar mais rápido
-const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8MB
+const MAX_FILE_SIZE = 8 * 1024 * 1024;
 
 export async function POST(req: Request) {
   try {
+    const accessDenied = await ensureAuthenticatedApiAccess();
+    if (accessDenied) {
+      return accessDenied;
+    }
+
     const formData = await req.formData();
     const file = formData.get("file") as File;
 
@@ -23,7 +27,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Verifica tamanho do arquivo
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
         {
@@ -39,7 +42,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Erro na importação:", error);
+    console.error("Erro na importacao:", error);
     return NextResponse.json(
       {
         error:
